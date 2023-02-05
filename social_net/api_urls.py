@@ -1,8 +1,10 @@
 from django.urls import path, include
-from .viewsets import PostsList
+from .viewsets import CreateBlog, CreatePost
 
-all_posts = PostsList.as_view({'GET': 'list'})
+create_blog = CreateBlog.as_view({'post': 'create'})
+create_post = CreatePost.as_view({'post': 'create'})
 
 urlpatterns = [
-    path('posts/', all_posts, name='all_posts')
+    path('create_blog/', create_blog, name='create_blog'),
+    path('create_post/', create_post, name='create_post')
 ]
