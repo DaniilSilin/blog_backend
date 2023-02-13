@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Blog, Post, Profile
+from .models import Blog, Post, UserProfile, Commentary, Tag
 # Register your models here.
 
 
@@ -14,10 +14,22 @@ class AdminBlog(admin.ModelAdmin):
 
 
 class AdminProfile(admin.ModelAdmin):
-    model = Profile
-    list_display = ('user', 'username', 'is_admin')
+    model = UserProfile
+    list_display = ('username', 'is_admin')
+
+
+class AdminCommentary(admin.ModelAdmin):
+    model = Commentary
+    list_display = ('author', 'created_at', 'body')
+
+
+class AdminTags(admin.ModelAdmin):
+    model = Tag
+    list_display = ('name',)
 
 
 admin.site.register(Post, AdminPosts)
 admin.site.register(Blog, AdminBlog)
-admin.site.register(Profile, AdminProfile)
+admin.site.register(UserProfile, AdminProfile)
+admin.site.register(Commentary, AdminCommentary)
+admin.site.register(Tag, AdminTags)
