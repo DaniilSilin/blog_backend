@@ -9,19 +9,30 @@ class CommentarySerializer(serializers.HyperlinkedModelSerializer):
         fields = ['author', 'body', 'created_at']
 
 
-class PostSerializer(serializers.HyperlinkedModelSerializer):
+class PostSerializer(serializers.ModelSerializer):
     # commentaries = CommentarySerializer(many=True)
 
     class Meta:
         model = Post
-        fields = ['id', 'author', 'title', 'body', 'is_published', 'created_at', 'likes', 'views']
+        fields = ['id', 'author', 'blog', 'title', 'body', 'is_published', 'created_at', 'likes', 'views', 'tags']
 
 
-class BlogSerializer(serializers.HyperlinkedModelSerializer):
-    owner = serializers.ReadOnlyField(source='owner.username')
-    # posts = PostSerializer(many=True)
+class BlogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Blog
-        fields = ['id', 'title', 'description', 'created_at', 'updated_at', 'owner']
+        fields = ('id', 'title', 'description', 'created_at', 'updated_at', 'owner', 'authors')
 
+
+class AllPostsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Post
+        fields = ('id', 'title', 'body', 'is_published', 'created_at', 'likes', 'views', 'tags')
+
+
+class AllBlogsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Blog
+        fields = ('id', 'title', 'description', 'created_at', 'updated_at', 'owner', 'authors')

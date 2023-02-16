@@ -1,8 +1,28 @@
-from rest_framework import viewsets, status
-from rest_framework.response import Response
+from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
-from .serializers import BlogSerializer, PostSerializer
+from .serializers import PostSerializer, BlogSerializer, AllPostsSerializer, AllBlogsSerializer
 from .models import Post, Blog
+
+
+class PostsPagination(PageNumberPagination):
+    page_size = 2
+
+
+class BlogsPagination(PageNumberPagination):
+    page_size = 2
+
+
+class AllPosts(viewsets.ModelViewSet):
+    queryset = Post.objects.filter(is_published=True)
+    serializer_class = AllPostsSerializer
+    pagination_class = PostsPagination
+
+
+class AllBlogs(viewsets.ModelViewSet):
+    queryset = Blog.objects.all()
+    serializer_class = AllBlogsSerializer
+    pagination_class = BlogsPagination
 
 
 class CreatePost(viewsets.ModelViewSet):
@@ -11,27 +31,22 @@ class CreatePost(viewsets.ModelViewSet):
 
 
 class CreateBlog(viewsets.ModelViewSet):
-    queryset = Post.objects.all()
+    queryset = Blog.objects.all()
     serializer_class = BlogSerializer
 
-    # def create(self, request, *args, **kwargs):
-    #     serializer = self.serializer_class(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     title = serializer.data['title']
-    #     description = serializer.data['description']
-    #     # created_at = serializer.data['created_at']
-    #     updated_at = serializer.data['updated_at']
-    #     # authors = serializer.data['authors']
-    #     # owner = serializer.data['owner']
-    #
-    #     blog_object = Blog(
-    #         title=title,
-    #         description=description,
-    #         updated_at=updated_at,
-    #         # authors=authors,
-    #         # owner=owner
-    #     )
-    #
-    #     blog_object.save()
-    #
-    #     return Response(blog_object, status=status.HTTP_200_OK)
+
+class MyPosts(viewsets.ModelViewSet):
+    queryset = Post.objects.filter()
+    serializer_class = PostSerializer
+
+    def filter_queryset(self, queryset):
+        user = self.request.user.id
+        return queryset.filter(author=user)
+
+
+class UserPost(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+
+    def filter_queryset(self, queryset):
+        return queryset.filter(id=self.kwargs['pk'])

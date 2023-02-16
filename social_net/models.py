@@ -45,6 +45,7 @@ class Post(models.Model):
     likes = models.IntegerField('Счётчик оценок', default=0)
     views = models.IntegerField('Счётчик просмотров', default=0)
     tags = models.ManyToManyField(Tag, blank=True)
+    blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
 
     class Meta:
         ordering = ['-created_at']
@@ -58,6 +59,7 @@ class Commentary(models.Model):
     author = models.ForeignKey(UserProfile, related_name='commentaries', on_delete=models.CASCADE)
     body = models.TextField('Тело комментария')
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
 
     class Meta:
         ordering = ['-created_at']
