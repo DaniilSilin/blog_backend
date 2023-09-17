@@ -38,9 +38,21 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'rest_framework',
+    'authentication.apps.AuthenticationConfig',
     'social_net.apps.SocialNetConfig',
-    'rest_framework'
 ]
+
+AUTH_USER_MODEL = "authentication.UserProfile"
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -114,8 +126,6 @@ TIME_ZONE = 'Europe/Samara'
 USE_I18N = True
 
 USE_TZ = True
-
-AUTH_USER_MODEL = 'social_net.UserProfile'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/

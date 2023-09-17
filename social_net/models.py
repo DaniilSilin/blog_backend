@@ -1,22 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User, AbstractUser
-
-# Create your models here.
-
-
-class UserProfile(AbstractUser):
-    nickname = models.CharField('Никнейм', max_length=255)
-    is_admin = models.BooleanField(default=False)
-
-    def __str__(self):
-        return self.username
-
-
-class Tag(models.Model):
-    name = models.CharField('Имя', max_length=255)
-
-    def __str__(self):
-        return self.name
+from authentication.models import UserProfile
 
 
 class Blog(models.Model):
@@ -33,6 +16,13 @@ class Blog(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Tag(models.Model):
+    name = models.CharField('Имя', max_length=255)
+
+    def __str__(self):
+        return self.name
 
 
 class Post(models.Model):

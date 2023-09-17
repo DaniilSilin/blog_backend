@@ -1,6 +1,5 @@
 from django.contrib import admin
 from .models import Blog, Post, UserProfile, Commentary, Tag
-# Register your models here.
 
 
 class AdminPosts(admin.ModelAdmin):
@@ -11,11 +10,6 @@ class AdminPosts(admin.ModelAdmin):
 class AdminBlog(admin.ModelAdmin):
     model = Blog
     list_display = ('title', 'description', 'created_at', 'updated_at')
-
-
-class AdminProfile(admin.ModelAdmin):
-    model = UserProfile
-    list_display = ('username', 'is_admin')
 
 
 class AdminCommentary(admin.ModelAdmin):
@@ -30,6 +24,5 @@ class AdminTags(admin.ModelAdmin):
 
 admin.site.register(Post, AdminPosts)
 admin.site.register(Blog, AdminBlog)
-admin.site.register(UserProfile, AdminProfile)
 admin.site.register(Commentary, AdminCommentary)
 admin.site.register(Tag, AdminTags)
