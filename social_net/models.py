@@ -3,7 +3,6 @@ from authentication.models import UserProfile
 
 
 class Blog(models.Model):
-    id = models.IntegerField(primary_key=True)
     title = models.CharField('Заголовок', max_length=255)
     description = models.TextField('Тематика')
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
