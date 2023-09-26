@@ -1,19 +1,31 @@
 from rest_framework import serializers
-from .models import Blog
+from .models import Blog, Post
 
 
-class AllBlogsSerializer(serializers.ModelSerializer):
+class BlogListSerializer(serializers.ModelSerializer):
     owner = serializers.CharField()
 
     class Meta:
         model = Blog
-        fields = ('id', 'title', 'description', 'created_at', 'updated_at', 'owner', 'authors')
+        fields = ('pk', 'title', 'slug', 'description', 'created_at', 'updated_at', 'owner', 'authors')
 
 
-class CreateBlogSerializer(serializers.ModelSerializer):
-    owner = serializers.CharField()
-
+class BlogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Blog
-        fields = ('id', 'title', 'description', 'created_at', 'updated_at', 'owner', 'authors')
+        fields = ('title', 'description', 'created_at', 'updated_at', 'owner', 'authors')
 
+
+class PostListSerializer(serializers.ModelSerializer):
+    author = serializers.CharField()
+
+    class Meta:
+        model = Post
+        fields = ('title', 'author', 'body', 'is_published', 'likes', 'views', 'blog')
+
+
+class CreatePostSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Post
+        fields = ('title', 'author', 'body', 'is_published', 'likes', 'views', 'blog')

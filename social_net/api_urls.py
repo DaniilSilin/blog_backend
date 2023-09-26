@@ -1,12 +1,25 @@
 from django.urls import path
-from .viewsets import AllBlogs, CreateBlog, BlogPage
+from .viewsets import BlogList, CreateBlog, BlogPage, CreatePost, PostList, MyPosts, BlogPosts, PostPage
 
-all_blogs = AllBlogs.as_view({'get': 'list'})
+blog_list = BlogList.as_view({'get': 'list'})
 create_blog = CreateBlog.as_view({'post': 'create'})
 blog_page = BlogPage.as_view({'post': 'update', 'get': 'list', 'delete': 'destroy'})
+blog_posts = BlogPosts.as_view({'get': 'list'})
+
+post_list = PostList.as_view({'get': 'list'})
+my_posts = MyPosts.as_view({'get': 'list'})
+create_post = CreatePost.as_view({'post': 'create'})
+post_page = PostPage.as_view({'post': 'create', 'get': 'list', 'delete': 'destroy'})
 
 urlpatterns = [
-    path('blog/list/', all_blogs, name='blog_list'),
+    path('blog/list/', blog_list, name='blog_list'),
     path('blog/create/', create_blog, name='create_blog'),
-    path('blog/<slug:title>/', blog_page, name='blog_page'),
+    path('blog/<slug:slug>/', blog_page, name='blog_page'),
+
+    path('blog/<slug:slug>/posts/', blog_posts, name='blog_posts'),
+    path('post/list/', post_list, name='post_list'),
+    path('posts/my/', my_posts, name='my_posts'),
+
+    path('blog/<slug:slug>/post/create/', create_post, name='create_post'),
+    path('blog/<slug:slug>/post/<pk:id>/', post_page, name='post_page'),
 ]

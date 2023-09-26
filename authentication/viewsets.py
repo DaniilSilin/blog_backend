@@ -2,8 +2,7 @@ from django.http import HttpResponseRedirect
 from rest_framework.response import Response
 from rest_framework import status, viewsets, permissions
 from django.contrib.auth import login, logout, authenticate
-from django.shortcuts import redirect, render
-from rest_framework.renderers import TemplateHTMLRenderer, StaticHTMLRenderer
+from django.shortcuts import redirect
 
 from .models import UserProfile
 from .serializers import LoginSerializer, RegisterSerializer, LogoutSerializer
@@ -53,14 +52,8 @@ class RegisterView(viewsets.ModelViewSet):
 class LogoutView(viewsets.ModelViewSet):
     serializer_class = LogoutSerializer
     permission_classes = (permissions.AllowAny,)
-    # renderer_classes = [TemplateHTMLRenderer]
-    # template_name = 'logout.html'
-
-    # def get(self, request):
-    #     return Response({})
 
     def retrieve(self, request, *args, **kwargs):
         logout(request)
-        # return Response('succesful', status=status.HTTP_200_OK)
         return HttpResponseRedirect('/login/')
 
