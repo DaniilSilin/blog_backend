@@ -4,7 +4,7 @@ from .models import Blog, Post, UserProfile, Commentary, Tag
 
 class AdminPosts(admin.ModelAdmin):
     model = Post
-    list_display = ('author', 'title', 'body', 'is_published', 'created_at', 'likes', 'views')
+    list_display = ('author', 'title', 'body', 'is_published', 'created_at', 'likes', 'views', 'post_id')
 
 
 class AdminBlog(admin.ModelAdmin):
