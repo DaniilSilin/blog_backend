@@ -18,6 +18,13 @@ class Blog(models.Model):
         return self.title
 
 
+class Tag(models.Model):
+    name = models.CharField('Имя', max_length=255)
+
+    def __str__(self):
+        return self.name
+
+
 class Post(models.Model):
     author = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     title = models.CharField('Заголовок', max_length=255)
@@ -28,20 +35,13 @@ class Post(models.Model):
     likes = models.IntegerField('Счётчик оценок', default=0)
     views = models.IntegerField('Счётчик просмотров', default=0)
     blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
-    # tags = models.ManyToManyField(Tag, blank=True)
+    tags = models.ManyToManyField(Tag)
 
     class Meta:
         ordering = ['-created_at']
 
     def __str__(self):
         return self.title
-
-
-class Tag(models.Model):
-    name = models.CharField('Имя', max_length=255)
-
-    def __str__(self):
-        return self.name
 
 
 class Commentary(models.Model):

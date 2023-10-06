@@ -1,6 +1,6 @@
 from django.urls import path
 from .viewsets import BlogList, CreateBlog, BlogPage, CreatePost, PostList, MyPosts, BlogPosts, PostPage, \
-    CreateCommentary
+    CreateCommentary, SubscriptionList
 
 blog_list = BlogList.as_view({'get': 'list'})
 create_blog = CreateBlog.as_view({'post': 'create'})
@@ -26,5 +26,6 @@ urlpatterns = [
     path('blog/<slug:slug>/post/create/', create_post, name='create_post'),
     path('blog/<slug:slug>/post/<int:id>/', post_page, name='post_page'),
 
-    path('blog/<slug:slug>/post/<int:id>/comment/create/', create_commentary, name='create_commentary')
+    path('blog/<slug:slug>/post/<int:id>/comment/create/', create_commentary, name='create_commentary'),
+
 ]

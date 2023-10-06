@@ -2,10 +2,12 @@ from rest_framework.response import Response
 from rest_framework import status, permissions, viewsets
 from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import get_object_or_404
+import datetime
 
 from authentication.models import UserProfile
 from .models import Blog, Post, Commentary
-from .serializers import BlogSerializer, CreateBlogSerializer, PostSerializer, CreatePostSerializer, CreateCommentarySerializer
+from .serializers import BlogSerializer, CreateBlogSerializer, PostSerializer, CreatePostSerializer, \
+    CreateCommentarySerializer, SubscriptionSerializer
 
 
 class IsBlogOwnerOrAdmin(permissions.BasePermission):
@@ -24,6 +26,32 @@ class BlogList(viewsets.ModelViewSet):
     serializer_class = BlogSerializer
     pagination_class = ListSetPagination
     permission_classes = (permissions.AllowAny,)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.queryset
+
+        order = self.request.query_params.get('order', None)
+
+        if order:
+            sort_array = order.split(',')
+
+            if 'title_asc' in sort_array:
+                target_index = sort_array.index("title_asc")
+                sort_array[target_index] = "title"
+            if 'title_desc' in sort_array:
+                target_index = sort_array.index("title_desc")
+                sort_array[target_index] = "-title"
+            if 'date' in sort_array:
+                target_index = sort_array.index("date")
+                sort_array[target_index] = "updated_at"
+            if '-date' in sort_array:
+                target_index = sort_array.index("-date")
+                sort_array[target_index] = "-updated_at"
+
+            queryset = queryset.order_by(*sort_array)
+
+        queryset = BlogSerializer(queryset, many=True)
+        return Response(queryset.data, status=status.HTTP_200_OK)
 
 
 class PostList(viewsets.ModelViewSet):
@@ -188,3 +216,11 @@ class CreateCommentary(viewsets.ModelViewSet):
 
         comm.save()
         return Response(status=status.HTTP_201_CREATED)
+
+
+class SubscriptionList(viewsets.ModelViewSet):
+    queryset = UserProfile.objects.all()
+    serializer_class = SubscriptionSerializer
+
+    def filter_queryset(self, queryset):
+        return queryset.filter(pk=self.request.user)
