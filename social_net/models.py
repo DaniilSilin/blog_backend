@@ -9,7 +9,8 @@ class Blog(models.Model):
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
     updated_at = models.DateTimeField('Дата последнего обновления', auto_now=True)
     owner = models.ForeignKey(UserProfile, related_name='blogs', on_delete=models.CASCADE)
-    authors = models.ManyToManyField(UserProfile)
+    count_of_posts = models.PositiveIntegerField('Кол-во постов блога', default=0)
+    authors = models.ManyToManyField(UserProfile, related_name='blog_list')
 
     class Meta:
         ordering = ['-created_at']

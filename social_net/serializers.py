@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import Blog, Post, Commentary, UserProfile
+from .models import Blog, Post, Commentary, UserProfile, Tag
+
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ('name',)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -14,10 +20,11 @@ class BlogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Blog
-        fields = ('pk', 'title', 'slug', 'description', 'created_at', 'updated_at', 'owner', 'authors')
+        fields = ('title', 'slug', 'description', 'created_at', 'updated_at', 'owner', 'authors')
 
 
 class CreateBlogSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Blog
         fields = ('title', 'slug', 'description', 'authors')
@@ -26,16 +33,17 @@ class CreateBlogSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     blog = BlogSerializer()
     author = serializers.CharField()
+    tags = TagSerializer(many=True)
 
     class Meta:
         model = Post
-        fields = ('title', 'author', 'body', 'is_published', 'likes', 'views', 'blog')
+        fields = ('title', 'author', 'body', 'is_published', 'likes', 'views', 'blog', 'tags')
 
 
 class CreatePostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
-        fields = ('title', 'author', 'body', 'is_published', 'blog')
+        fields = ('title', 'author', 'body', 'is_published', 'blog', 'tags')
 
 
 class CreateCommentarySerializer(serializers.ModelSerializer):
