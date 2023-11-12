@@ -10,6 +10,7 @@ class Blog(models.Model):
     updated_at = models.DateTimeField('Дата последнего обновления', auto_now=True)
     owner = models.ForeignKey(UserProfile, related_name='blogs', on_delete=models.CASCADE)
     count_of_posts = models.PositiveIntegerField('Кол-во постов блога', default=0)
+    count_of_commentaries = models.PositiveIntegerField('Кол-во комментариев блога', default=0)
     authors = models.ManyToManyField(UserProfile, related_name='blog_list')
 
     class Meta:
@@ -35,7 +36,7 @@ class Post(models.Model):
     created_at = models.DateTimeField('Дата публикации', auto_now_add=True)
     likes = models.IntegerField('Счётчик оценок', default=0)
     views = models.IntegerField('Счётчик просмотров', default=0)
-    blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
+    blog = models.ForeignKey(Blog, to_field='slug', on_delete=models.CASCADE)
     tags = models.ManyToManyField(Tag)
 
     class Meta:
@@ -50,6 +51,7 @@ class Commentary(models.Model):
     body = models.TextField('Тело комментария')
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    comment_id = models.PositiveIntegerField('ID комментария', null=True)
 
     class Meta:
         ordering = ['-created_at']

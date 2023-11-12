@@ -1,12 +1,13 @@
 from rest_framework.response import Response
 from rest_framework import status, permissions, viewsets
 from rest_framework.pagination import PageNumberPagination
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
+
 
 from authentication.models import UserProfile
 from .models import Blog, Post, Commentary, Tag
-from .serializers import BlogSerializer, CreateBlogSerializer, PostSerializer, CreatePostSerializer, \
-    CreateCommentarySerializer
+from .serializers import BlogSerializer, CreateBlogSerializer, UpdateBlogSerializer, PostSerializer, CreatePostSerializer, \
+    CreateCommentarySerializer, CommentarySerializer
 
 
 class IsBlogOwnerOrAdmin(permissions.BasePermission):
@@ -14,9 +15,27 @@ class IsBlogOwnerOrAdmin(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         if request.method == 'POST':
-            return request.user is True or request.user.is_admin
+            return request.user
         else:
             return bool(Blog.objects.filter(slug=view.kwargs['slug'], owner=request.user) or request.user.is_admin)
+
+
+class PostPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        else:
+            return request.user.is_admin
+
+
+class CommentaryPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        if request.method == 'POST':
+            return request.user
+        else:
+            return bool(request.user.is_admin)
 
 
 class ListSetPagination(PageNumberPagination):
@@ -73,6 +92,8 @@ class BlogPage(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return CreateBlogSerializer
+        if self.request.method == 'PUT':
+            return UpdateBlogSerializer
         return BlogSerializer
 
     def destroy(self, request, *args, **kwargs):
@@ -82,10 +103,11 @@ class BlogPage(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         blog = Blog.objects.get(slug=self.kwargs['slug'])
-        data = BlogSerializer(instance=blog, data=request.data)
-        data.is_valid(raise_exception=True)
-        data.save()
-        return Response(data.data, status=status.HTTP_200_OK)
+        serializer = CreateBlogSerializer(instance=blog, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        instance_serializer = BlogSerializer(serializer)
+        return Response(instance_serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         serializer = CreateBlogSerializer(data=request.data)
@@ -106,8 +128,8 @@ class BlogPage(viewsets.ModelViewSet):
         blog.save()
         blog.authors.set(authors)
 
-        # serial = BlogSerializer(blog, many=True)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serial = BlogSerializer(blog)
+        return Response(serial.data, status=status.HTTP_201_CREATED)
 
     def filter_queryset(self, queryset):
         return queryset.filter(slug=self.kwargs['slug'])
@@ -156,6 +178,10 @@ class PostList(viewsets.ModelViewSet):
             list_of_order = ['title_asc', 'title_desc', 'date', '-date']
 
             for order in order_query_split:
+                if 'likes' in order_query_split:
+                    order_array += ['likes']
+                if '-likes' in order_query_split:
+                    order_array += ['-likes']
                 if order in list_of_order:
                     if 'title_asc' in order_array:
                         order_array += ['title']
@@ -198,33 +224,34 @@ class BlogPosts(viewsets.ModelViewSet):
 
 class PostPage(viewsets.ModelViewSet):
     queryset = Post.objects.all()
-    permission_classes = [IsBlogOwnerOrAdmin]
+    permission_classes = [PostPermission]
 
     def get_serializer_class(self):
-        if self.request.method == 'POST':
+        if self.request.method == 'POST' or self.request.method == 'PUT':
             return CreatePostSerializer
         return PostSerializer
 
     def filter_queryset(self, queryset):
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
-        post = Post.objects.get(post_id=self.kwargs['id'], blog=blog)
-        post.views = post.views + 1
+        post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
+        post.views += 1
         post.save(update_fields=("views",))
-        return queryset.filter(post_id=self.kwargs['id'], blog=blog)
+        return queryset.filter(post_id=self.kwargs['post_id'], blog=blog, is_published=True)
 
     def destroy(self, request, *args, **kwargs):
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
-        post = get_object_or_404(Post, post_id=self.kwargs['id'], blog=blog)
+        post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
         post.delete()
         return Response(status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
-        blog = Blog.objects.get(slug=self.kwargs['slug'])
-        post = get_object_or_404(Post, post_id=self.kwargs['id'], blog=blog)
-        data = CreatePostSerializer(instance=post, data=request.data)
-        data.is_valid(raise_exception=True)
-        data.save()
-        return Response(data.data, status=status.HTTP_200_OK)
+        blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
+        post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
+        serializer = CreatePostSerializer(instance=post, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        serial = PostSerializer(serializer, many=False)
+        return Response(serial.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         serializer = CreatePostSerializer(data=request.data)
@@ -233,7 +260,11 @@ class PostPage(viewsets.ModelViewSet):
         body = serializer.data['body']
         is_published = serializer.data['is_published']
         author = get_object_or_404(UserProfile, pk=serializer.data['author'])
-        blog = get_object_or_404(Blog, pk=serializer.data['blog'])
+        blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
+
+        blog.count_of_posts += 1
+        blog.save(update_fields=("count_of_posts",))
+        post_id = blog.count_of_posts
 
         post = Post(
             title=title,
@@ -241,31 +272,44 @@ class PostPage(viewsets.ModelViewSet):
             is_published=is_published,
             author=author,
             blog=blog,
+            post_id=post_id
         )
 
         post.save()
 
-        return Response('success', status=status.HTTP_200_OK)
+        # serial = PostSerializer(post, many=False)
+        return Response(post, status=status.HTTP_200_OK)
 
 
-class CreateCommentary(viewsets.ModelViewSet):
+class CommentaryPage(viewsets.ModelViewSet):
     queryset = Commentary.objects.all()
-    serializer_class = CreateCommentarySerializer
-    permission_classes = [IsBlogOwnerOrAdmin]
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST' or self.request.method == 'PUT':
+            return CreateCommentarySerializer
+        return CommentarySerializer
 
     def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
+        serializer = CreateCommentarySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         body = serializer.data['body']
-        author = request.user
-        post = get_object_or_404(Post, pk=serializer.data['post'])
+        post = get_object_or_404(Post, post_id=self.kwargs['post_id'])
+        blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
+
+        blog.count_of_commentaries += 1
+        blog.save(update_fields=("count_of_commentaries",))
+        comment_id = blog.count_of_commentaries
 
         comm = Commentary(
             body=body,
-            author=author,
-            post=post
+            author=request.user,
+            post=post,
+            comment_id=comment_id,
         )
 
         comm.save()
-        return Response(status=status.HTTP_201_CREATED)
+        serial = CommentarySerializer(comm, many=False)
+        return Response(serial.data, status=status.HTTP_201_CREATED)
 
+    def filter_queryset(self, queryset):
+        return queryset.filter(comment_id=self.kwargs['comment_id'])
