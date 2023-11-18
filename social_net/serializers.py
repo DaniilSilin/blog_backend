@@ -1,4 +1,3 @@
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from .models import Blog, Post, Commentary, UserProfile, Tag
 
@@ -14,11 +13,6 @@ class UserSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = ('username',)
 
-
-# class BlogSerializerOnCreate(serializers.ModelSerializer):
-#     class Meta:
-#         model = Blog
-#         fields = ('title', 'slug', 'description', 'created_at', 'updated_at', 'owner', 'authors')
 
 class BlogSerializer(serializers.ModelSerializer):
     owner = serializers.CharField()
@@ -46,10 +40,11 @@ class PostSerializer(serializers.ModelSerializer):
     blog = BlogSerializer()
     author = serializers.CharField()
     tags = TagSerializer(many=True)
+    liked_users = UserSerializer(many=True)
 
     class Meta:
         model = Post
-        fields = ('title', 'author', 'body', 'is_published', 'likes', 'views', 'post_id', 'blog', 'tags')
+        fields = ('title', 'author', 'body', 'is_published', 'created_at', 'likes', 'views', 'post_id', 'blog', 'tags', 'liked_users')
 
 
 class CreatePostSerializer(serializers.ModelSerializer):
@@ -65,7 +60,16 @@ class CreateCommentarySerializer(serializers.ModelSerializer):
 
 
 class CommentarySerializer(serializers.ModelSerializer):
+    author = serializers.CharField()
 
     class Meta:
         model = Commentary
-        fields = ('author', 'body', 'created_at', 'comment_id')
+        fields = ('author', 'body', 'created_at')
+
+
+class SubscriptionList(serializers.ModelSerializer):
+    subscriptions = BlogSerializer(many=True)
+
+    class Meta:
+        model = UserProfile
+        fields = ('subscriptions',)

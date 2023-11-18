@@ -13,15 +13,12 @@ class Blog(models.Model):
     count_of_commentaries = models.PositiveIntegerField('Кол-во комментариев блога', default=0)
     authors = models.ManyToManyField(UserProfile, related_name='blog_list')
 
-    class Meta:
-        ordering = ['-created_at']
-
     def __str__(self):
-        return self.title
+        return self.slug
 
 
 class Tag(models.Model):
-    name = models.CharField('Имя', max_length=255)
+    name = models.CharField('Имя', unique=True, max_length=255)
 
     def __str__(self):
         return self.name
@@ -35,12 +32,10 @@ class Post(models.Model):
     is_published = models.BooleanField('Опубликован ли', default=False)
     created_at = models.DateTimeField('Дата публикации', auto_now_add=True)
     likes = models.IntegerField('Счётчик оценок', default=0)
+    liked_users = models.ManyToManyField('authentication.UserProfile', related_name='alex')
     views = models.IntegerField('Счётчик просмотров', default=0)
     blog = models.ForeignKey(Blog, to_field='slug', on_delete=models.CASCADE)
     tags = models.ManyToManyField(Tag)
-
-    class Meta:
-        ordering = ['-created_at']
 
     def __str__(self):
         return self.title
@@ -52,9 +47,6 @@ class Commentary(models.Model):
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     comment_id = models.PositiveIntegerField('ID комментария', null=True)
-
-    class Meta:
-        ordering = ['-created_at']
 
     def __str__(self):
         return self.body
