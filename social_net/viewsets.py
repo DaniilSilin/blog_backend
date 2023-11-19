@@ -1,6 +1,5 @@
 from rest_framework.response import Response
-from rest_framework import status, permissions, viewsets
-from rest_framework.pagination import PageNumberPagination
+from rest_framework import status, permissions, viewsets, pagination
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 
@@ -17,7 +16,7 @@ class BlogPermissions(permissions.BasePermission):
         if request.method == 'POST':
             return bool(request.user and request.user.is_authenticated)
         else:
-            return bool(get_object_or_404(slug=view.kwargs['slug'], owner=request.user.id) or (request.user and request.user.is_staff))
+            return bool(Blog.objects.get(Blog, slug=view.kwargs['slug'], owner=request.user.id) or (request.user and request.user.is_staff))
 
 
 class PostPermissions(permissions.BasePermission):
@@ -40,14 +39,14 @@ class CommentaryPermissions(permissions.BasePermission):
             return bool(Commentary.objects.filter(comment_id=view.kwargs['comment_id'], author=request.user.id) or (request.user and request.user.is_staff))
 
 
-class ListSetPagination(PageNumberPagination):
-    page_size = 10
+class ListSetPagination(pagination.PageNumberPagination):
+    page_size = 1
+    max_page_size = 1
 
 
 class BlogList(viewsets.ModelViewSet):
     queryset = Blog.objects.all().order_by('-updated_at')
     serializer_class = BlogSerializer
-    pagination_class = ListSetPagination
     permission_classes = [permissions.AllowAny]
 
     def list(self, request, *args, **kwargs):
@@ -61,7 +60,7 @@ class BlogList(viewsets.ModelViewSet):
         after = self.request.query_params.get('after', None)
 
         if search:
-            query_dict = {'title__contains': search, 'authors__username__contains': search}
+            queryset = queryset.filter(Q(title__icontains=search) | Q(authors__username__icontains=search))
 
         if after:
             query_dict['updated_at__gt'] = after
@@ -85,10 +84,11 @@ class BlogList(viewsets.ModelViewSet):
                 else:
                     return Response(status=status.HTTP_200_OK)
 
-        print(order_array)
-        queryset = queryset.filter(**query_dict).order_by(*order_array).distinct()
+        queryset = queryset.filter(**query_dict)
+        if len(order_array):
+            queryset = queryset.order_by(*order_array)
 
-        queryset = BlogSerializer(queryset, many=True)
+        queryset = BlogSerializer(queryset.distinct(), many=True)
         return Response(queryset.data, status=status.HTTP_200_OK)
 
 
@@ -138,12 +138,16 @@ class BlogPage(viewsets.ModelViewSet):
         serial = BlogSerializer(blog)
         return Response(serial.data, status=status.HTTP_201_CREATED)
 
-    def filter_queryset(self, queryset):
-        return queryset.filter(slug=self.kwargs['slug'])
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            serial = BlogSerializer(self.queryset.get(slug=self.kwargs['slug']))
+            return Response(serial.data)
+        except Blog.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 class PostList(viewsets.ModelViewSet):
-    queryset = Post.objects.filter(is_published=True).order_by('-created_at')
+    queryset = Post.objects.all().order_by('-created_at')
     serializer_class = PostSerializer
     pagination_class = ListSetPagination
     permission_classes = [permissions.AllowAny]
@@ -165,7 +169,7 @@ class PostList(viewsets.ModelViewSet):
             query_dict['created_at__lt'] = before
 
         if search:
-            query_dict = {**query_dict, 'title__contains': search, 'author__username__contains': search}
+            queryset = queryset.filter(Q(title__icontains=search) | Q(author__username__icontains=search))
 
         if tags:
             order_query1 = tags.split(',')
@@ -201,27 +205,30 @@ class PostList(viewsets.ModelViewSet):
                 else:
                     return Response(status=status.HTTP_200_OK)
 
-        queryset = queryset.filter(**query_dict).order_by(*order_array).distinct()
+        queryset = queryset.filter(**query_dict)
+        if len(order_array):
+            queryset = queryset.order_by(*order_array).distinct()
 
         serial = PostSerializer(queryset, many=True)
         return Response(serial.data, status=status.HTTP_200_OK)
 
 
 class MyPosts(viewsets.ModelViewSet):
-    queryset = Post.objects.filter(is_published=True).order_by('-created_at')
+    queryset = Post.objects.all().order_by('-created_at')
     serializer_class = PostSerializer
     pagination_class = ListSetPagination
     permission_classes = [permissions.IsAuthenticated]
 
     def list(self, request, *args, **kwargs):
         queryset = self.queryset.filter(author=request.user)
-        data = PostSerializer(queryset, many=True).data
-        return Response(data, status=status.HTTP_200_OK)
+        serializer = PostSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class BlogPosts(viewsets.ModelViewSet):
     queryset = Post.objects.filter(is_published=True)
     serializer_class = PostSerializer
+    pagination_class = ListSetPagination
     permission_classes = [permissions.AllowAny]
 
     def list(self, request, *args, **kwargs):
@@ -336,10 +343,14 @@ class CommentaryPage(viewsets.ModelViewSet):
         comment.delete()
         return Response(status=status.HTTP_200_OK)
 
-    def filter_queryset(self, queryset):
-        blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
-        post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
-        return self.queryset.filter(comment_id=self.kwargs['comment_id'], post=post)
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
+            post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
+            serial = CommentarySerializer(self.queryset.get(comment_id=self.kwargs['comment_id'], post=post))
+            return Response(serial.data)
+        except Commentary.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 class BlogSubscribe(viewsets.ModelViewSet):
@@ -348,13 +359,13 @@ class BlogSubscribe(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def subscribe(self, request, slug):
-        blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
+        blog = get_object_or_404(Blog, slug=slug)
         user = get_object_or_404(UserProfile, username=request.user)
         user.subscriptions.add(blog)
         return Response('added', status=status.HTTP_200_OK)
 
     def unsubscribe(self, request, slug):
-        blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
+        blog = get_object_or_404(Blog, slug=slug)
         user = get_object_or_404(UserProfile, username=request.user)
         user.subscriptions.remove(blog)
         return Response('removed', status=status.HTTP_200_OK)
@@ -370,12 +381,12 @@ class SubscriptionList2(viewsets.ModelViewSet):
         return self.queryset.filter(username=self.kwargs['username'])
 
 
-class AddLike(viewsets.ModelViewSet):
+class LikeViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = SubscriptionList
     permission_classes = [permissions.IsAuthenticated]
 
-    def set_like(self, request, slug, post_id):
+    def add_like(self, request, slug, post_id):
         user = get_object_or_404(UserProfile, username=request.user)
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
         post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
