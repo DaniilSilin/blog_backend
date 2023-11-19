@@ -17,7 +17,7 @@ class BlogPermissions(permissions.BasePermission):
         if request.method == 'POST':
             return bool(request.user and request.user.is_authenticated)
         else:
-            return bool(Blog.objects.filter(slug=view.kwargs['slug'], owner=request.user.id).exists() or (request.user and request.user.is_staff))
+            return bool(get_object_or_404(slug=view.kwargs['slug'], owner=request.user.id) or (request.user and request.user.is_staff))
 
 
 class PostPermissions(permissions.BasePermission):
@@ -53,7 +53,7 @@ class BlogList(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         queryset = self.queryset
         query_dict = {}
-        sort_array = []
+        order_array = []
 
         search = self.request.query_params.get('search', None)
         order = self.request.query_params.get('order', None)
@@ -69,22 +69,24 @@ class BlogList(viewsets.ModelViewSet):
             query_dict['updated_at__lt'] = before
 
         if order:
-            sort_array = order.split(',')
+            order_array_split = order.split(',')
+            list_of_order = ['title_asc', 'title_desc', 'date', '-date']
 
-            if 'title_asc' in sort_array:
-                target_index = sort_array.index("title_asc")
-                sort_array[target_index] = "title"
-            if 'title_desc' in sort_array:
-                target_index = sort_array.index("title_desc")
-                sort_array[target_index] = "-title"
-            if 'date' in sort_array:
-                target_index = sort_array.index("date")
-                sort_array[target_index] = "updated_at"
-            if '-date' in sort_array:
-                target_index = sort_array.index("-date")
-                sort_array[target_index] = "-updated_at"
+            for order_query in order_array_split:
+                if order_query in list_of_order:
+                    if 'title_asc' in order_array_split:
+                        order_array += ['title']
+                    if 'title_desc' in order_array_split:
+                        order_array += ["-title"]
+                    if 'date' in order_array_split:
+                        order_array += ["updated_at"]
+                    if '-date' in order_array_split:
+                        order_array += ["-updated_at"]
+                else:
+                    return Response(status=status.HTTP_200_OK)
 
-        queryset = queryset.filter(**query_dict).order_by(*sort_array).distinct()
+        print(order_array)
+        queryset = queryset.filter(**query_dict).order_by(*order_array).distinct()
 
         queryset = BlogSerializer(queryset, many=True)
         return Response(queryset.data, status=status.HTTP_200_OK)
