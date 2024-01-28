@@ -31,6 +31,8 @@ class CreateBlogSerializer(serializers.ModelSerializer):
 
 
 class UpdateBlogSerializer(serializers.ModelSerializer):
+    # authors = UserSerializer(many=True, required=False)
+
     class Meta:
         model = Blog
         fields = ('title', 'description', 'authors',)

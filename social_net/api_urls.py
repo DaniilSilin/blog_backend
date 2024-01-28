@@ -15,7 +15,7 @@ remove_like = LikeViewSet.as_view({'post': 'remove_like'})
 
 post_list = PostList.as_view({'get': 'list'})
 my_posts = MyPosts.as_view({'get': 'list'})
-post_page = PostPage.as_view({'put': 'update', 'get': 'list', 'delete': 'destroy'})
+post_page = PostPage.as_view({'put': 'update', 'get': 'retrieve', 'delete': 'destroy'})
 post_create = PostPage.as_view({'post': 'create'})
 
 create_commentary = CommentaryPage.as_view({'post': 'create'})

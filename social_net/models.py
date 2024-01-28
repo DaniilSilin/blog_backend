@@ -1,3 +1,4 @@
+import datetime
 from django.db import models
 from authentication.models import UserProfile
 
@@ -11,10 +12,14 @@ class Blog(models.Model):
     owner = models.ForeignKey(UserProfile, related_name='blogs', on_delete=models.CASCADE)
     count_of_posts = models.PositiveIntegerField('Кол-во постов блога', default=0)
     count_of_commentaries = models.PositiveIntegerField('Кол-во комментариев блога', default=0)
-    authors = models.ManyToManyField(UserProfile, related_name='blog_list')
+    authors = models.ManyToManyField(UserProfile, related_name='blog_list', blank=True)
 
     def __str__(self):
         return self.slug
+
+    def save(self, *args, **kwargs):
+        self.updated_at = datetime.datetime.now()
+        super(Blog, self).save(*args, **kwargs)
 
 
 class Tag(models.Model):
@@ -30,15 +35,22 @@ class Post(models.Model):
     post_id = models.PositiveIntegerField('ID поста', null=True)
     body = models.TextField('Тело поста')
     is_published = models.BooleanField('Опубликован ли', default=False)
-    created_at = models.DateTimeField('Дата публикации', auto_now_add=True)
+    created_at = models.DateTimeField('Дата публикации', null=True, blank=True)
     likes = models.IntegerField('Счётчик оценок', default=0)
-    liked_users = models.ManyToManyField('authentication.UserProfile', related_name='alex')
+    liked_users = models.ManyToManyField('authentication.UserProfile', related_name='alex', blank=True)
     views = models.IntegerField('Счётчик просмотров', default=0)
     blog = models.ForeignKey(Blog, to_field='slug', on_delete=models.CASCADE)
-    tags = models.ManyToManyField(Tag)
+    tags = models.ManyToManyField(Tag, blank=True)
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        if not self.is_published:
+            self.created_at = None
+        else:
+            self.created_at = datetime.datetime.now()
+        super(Post, self).save(*args, **kwargs)
 
 
 class Commentary(models.Model):

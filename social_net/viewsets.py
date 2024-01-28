@@ -1,5 +1,6 @@
 from rest_framework.response import Response
-from rest_framework import status, permissions, viewsets, pagination
+from rest_framework.pagination import PageNumberPagination
+from rest_framework import status, permissions, viewsets, exceptions
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 
@@ -16,7 +17,7 @@ class BlogPermissions(permissions.BasePermission):
         if request.method == 'POST':
             return bool(request.user and request.user.is_authenticated)
         else:
-            return bool(Blog.objects.get(Blog, slug=view.kwargs['slug'], owner=request.user.id) or (request.user and request.user.is_staff))
+            return bool(Blog.objects.filter(slug=view.kwargs['slug']) and (Blog.objects.filter(Q(slug=view.kwargs['slug']) & Q(owner=request.user.id)) or (request.user.is_staff and request.user.is_authenticated and request.user)))
 
 
 class PostPermissions(permissions.BasePermission):
@@ -24,7 +25,7 @@ class PostPermissions(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         if request.method == 'POST':
-            return bool(request.user and request.user.is_authenticated)
+            return bool((request.user and request.user.is_authenticated) and Blog.objects.filter(Q(slug=view.kwargs['slug']) & (Q(owner=request.user) | Q(authors__username__contains=request.user))))
         else:
             return bool(Post.objects.filter(Q(post_id=view.kwargs['post_id']) & (Q(blog__authors__username__contains=request.user) | Q(blog__owner=request.user.id))) or (request.user and request.user.is_staff))
 
@@ -34,19 +35,24 @@ class CommentaryPermissions(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         if request.method == 'POST':
-            return bool(request.user and request.user.is_authenticated)
+            return bool((request.user and request.user.is_authenticated) and (Post.objects.filter(Q(post_id=view.kwargs['post_id']) & Q(blog__slug=view.kwargs['slug']))))
         else:
-            return bool(Commentary.objects.filter(comment_id=view.kwargs['comment_id'], author=request.user.id) or (request.user and request.user.is_staff))
+            return bool(Commentary.objects.filter(Q(comment_id=view.kwargs['comment_id']) & Q(post__post_id=view.kwargs['post_id']) & Q(post__blog__slug=view.kwargs['slug']) & (Q(post__blog__owner=request.user.id) | Q(post__blog__authors__username__contains=request.user) | Q(author=request.user)) or (request.user and request.user.is_staff)))
+
+        # if bool(Post.objects.filter(Q(post_id=view.kwargs['post_id']) & Q(blog__slug=view.kwargs['slug']) & ((Q(blog__authors__username__contains=request.user) | Q(blog__owner=request.user) | Q(request.user.is_staff)) | Q(is_published=True)))):
+        #     return True
+        # else:
+        #     raise exceptions.NotFound
 
 
-class ListSetPagination(pagination.PageNumberPagination):
-    page_size = 1
-    max_page_size = 1
+class ListSetPagination(PageNumberPagination):
+    page_size = 5
 
 
 class BlogList(viewsets.ModelViewSet):
     queryset = Blog.objects.all().order_by('-updated_at')
     serializer_class = BlogSerializer
+    pagination_class = ListSetPagination
     permission_classes = [permissions.AllowAny]
 
     def list(self, request, *args, **kwargs):
@@ -88,7 +94,8 @@ class BlogList(viewsets.ModelViewSet):
         if len(order_array):
             queryset = queryset.order_by(*order_array)
 
-        queryset = BlogSerializer(queryset.distinct(), many=True)
+        paginatedResult = self.paginate_queryset(queryset.distinct())
+        queryset = BlogSerializer(paginatedResult, many=True)
         return Response(queryset.data, status=status.HTTP_200_OK)
 
 
@@ -110,11 +117,12 @@ class BlogPage(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
-        serializer = CreateBlogSerializer(instance=blog, data=request.data, partial=True)
+        serializer = UpdateBlogSerializer(instance=blog, data=request.data, partial=True)
+        print(request.data['authors'])
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        instance_serializer = BlogSerializer(serializer)
-        return Response(instance_serializer.data, status=status.HTTP_200_OK)
+        # instance_serializer = UpdateBlogSerializer(serializer)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         serializer = CreateBlogSerializer(data=request.data)
@@ -209,7 +217,8 @@ class PostList(viewsets.ModelViewSet):
         if len(order_array):
             queryset = queryset.order_by(*order_array).distinct()
 
-        serial = PostSerializer(queryset, many=True)
+        paginatedResult = self.paginate_queryset(queryset)
+        serial = PostSerializer(paginatedResult, many=True)
         return Response(serial.data, status=status.HTTP_200_OK)
 
 
@@ -221,7 +230,8 @@ class MyPosts(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.queryset.filter(author=request.user)
-        serializer = PostSerializer(queryset, many=True)
+        paginatedResult = self.paginate_queryset(queryset)
+        serializer = PostSerializer(paginatedResult, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -233,7 +243,8 @@ class BlogPosts(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.queryset.filter(blog__slug=self.kwargs['slug'])
-        serial = PostSerializer(queryset, many=True)
+        paginatedResult = self.paginate_queryset(queryset)
+        serial = PostSerializer(paginatedResult, many=True)
         return Response(serial.data, status=status.HTTP_200_OK)
 
 
@@ -246,12 +257,16 @@ class PostPage(viewsets.ModelViewSet):
             return CreatePostSerializer
         return PostSerializer
 
-    def filter_queryset(self, queryset):
-        blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
-        post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
-        post.views += 1
-        post.save(update_fields=("views",))
-        return self.queryset.filter(post_id=self.kwargs['post_id'], blog=blog)
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
+            post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
+            serial = PostSerializer(self.queryset.get(post_id=self.kwargs['post_id'], blog=blog))
+            post.views += 1
+            post.save(update_fields=("views",))
+            return Response(serial.data)
+        except Post.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
     def destroy(self, request, *args, **kwargs):
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
@@ -265,8 +280,8 @@ class PostPage(viewsets.ModelViewSet):
         serializer = CreatePostSerializer(instance=post, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        serial = PostSerializer(serializer, many=False)
-        return Response(serial.data, status=status.HTTP_200_OK)
+        # serial = PostSerializer(serializer, many=False)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         serializer = CreatePostSerializer(data=request.data)
@@ -309,8 +324,8 @@ class CommentaryPage(viewsets.ModelViewSet):
         serializer = CreateCommentarySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         body = serializer.data['body']
-        post = get_object_or_404(Post, post_id=self.kwargs['post_id'])
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
+        post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
 
         blog.count_of_commentaries += 1
         blog.save(update_fields=("count_of_commentaries",))
