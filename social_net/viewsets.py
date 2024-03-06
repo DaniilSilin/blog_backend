@@ -117,8 +117,8 @@ class BlogPage(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
+        blog.authors.clear()
         serializer = UpdateBlogSerializer(instance=blog, data=request.data, partial=True)
-        print(request.data['authors'])
         serializer.is_valid(raise_exception=True)
         serializer.save()
         # instance_serializer = UpdateBlogSerializer(serializer)
@@ -155,7 +155,7 @@ class BlogPage(viewsets.ModelViewSet):
 
 
 class PostList(viewsets.ModelViewSet):
-    queryset = Post.objects.all().order_by('-created_at')
+    queryset = Post.objects.filter(is_published=True).order_by('-created_at')
     serializer_class = PostSerializer
     pagination_class = ListSetPagination
     permission_classes = [permissions.AllowAny]
@@ -277,6 +277,10 @@ class PostPage(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
         post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
+        request.data._mutable = True
+        request.data['is_published'] = request.data.get('is_published', 'false')
+        post.tags.clear()
+        request.data._mutable = False
         serializer = CreatePostSerializer(instance=post, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -289,9 +293,8 @@ class PostPage(viewsets.ModelViewSet):
         title = serializer.data['title']
         body = serializer.data['body']
         is_published = serializer.data['is_published']
-        author = get_object_or_404(UserProfile, pk=serializer.data['author'])
+        author = get_object_or_404(UserProfile, username=request.user)
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
-
         blog.count_of_posts += 1
         blog.save(update_fields=("count_of_posts",))
         post_id = blog.count_of_posts
@@ -326,7 +329,6 @@ class CommentaryPage(viewsets.ModelViewSet):
         body = serializer.data['body']
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
         post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
-
         blog.count_of_commentaries += 1
         blog.save(update_fields=("count_of_commentaries",))
         comment_id = blog.count_of_commentaries
@@ -386,7 +388,7 @@ class BlogSubscribe(viewsets.ModelViewSet):
         return Response('removed', status=status.HTTP_200_OK)
 
 
-class SubscriptionList2(viewsets.ModelViewSet):
+class SubscriptionListViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = SubscriptionList
     pagination_class = ListSetPagination

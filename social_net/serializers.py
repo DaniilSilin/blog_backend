@@ -31,11 +31,10 @@ class CreateBlogSerializer(serializers.ModelSerializer):
 
 
 class UpdateBlogSerializer(serializers.ModelSerializer):
-    # authors = UserSerializer(many=True, required=False)
 
     class Meta:
         model = Blog
-        fields = ('title', 'description', 'authors',)
+        fields = ('title', 'description', 'created_at', 'updated_at', 'authors')
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -52,7 +51,7 @@ class PostSerializer(serializers.ModelSerializer):
 class CreatePostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
-        fields = ('title', 'author', 'body', 'is_published', 'tags')
+        fields = ('title', 'body', 'is_published', 'tags')
 
 
 class CreateCommentarySerializer(serializers.ModelSerializer):

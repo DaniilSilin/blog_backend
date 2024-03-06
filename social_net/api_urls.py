@@ -1,5 +1,5 @@
 from django.urls import path
-from .viewsets import BlogList, BlogPage, PostList, MyPosts, BlogPosts, PostPage, CommentaryPage, BlogSubscribe, SubscriptionList2, LikeViewSet
+from .viewsets import BlogList, BlogPage, PostList, MyPosts, BlogPosts, PostPage, CommentaryPage, BlogSubscribe, SubscriptionListViewSet, LikeViewSet
 
 blog_list = BlogList.as_view({'get': 'list'})
 blog_page = BlogPage.as_view({'put': 'update', 'get': 'retrieve', 'delete': 'destroy'})
@@ -8,7 +8,7 @@ blog_posts = BlogPosts.as_view({'get': 'list'})
 
 blog_sub = BlogSubscribe.as_view({'post': 'subscribe'})
 blog_unsub = BlogSubscribe.as_view({'post': 'unsubscribe'})
-user_subscriptions = SubscriptionList2.as_view({'get': 'list'})
+user_subscriptions = SubscriptionListViewSet.as_view({'get': 'list'})
 
 add_like = LikeViewSet.as_view({'post': 'add_like'})
 remove_like = LikeViewSet.as_view({'post': 'remove_like'})

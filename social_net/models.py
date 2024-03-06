@@ -8,7 +8,7 @@ class Blog(models.Model):
     description = models.TextField('Тематика')
     slug = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
-    updated_at = models.DateTimeField('Дата последнего обновления', auto_now=True)
+    updated_at = models.DateTimeField('Дата последнего обновления', auto_now_add=True)
     owner = models.ForeignKey(UserProfile, related_name='blogs', on_delete=models.CASCADE)
     count_of_posts = models.PositiveIntegerField('Кол-во постов блога', default=0)
     count_of_commentaries = models.PositiveIntegerField('Кол-во комментариев блога', default=0)
@@ -17,13 +17,9 @@ class Blog(models.Model):
     def __str__(self):
         return self.slug
 
-    def save(self, *args, **kwargs):
-        self.updated_at = datetime.datetime.now()
-        super(Blog, self).save(*args, **kwargs)
-
 
 class Tag(models.Model):
-    name = models.CharField('Имя', unique=True, max_length=255)
+    name = models.CharField('Имя', unique=True, max_length=255, blank=True)
 
     def __str__(self):
         return self.name
@@ -39,17 +35,23 @@ class Post(models.Model):
     likes = models.IntegerField('Счётчик оценок', default=0)
     liked_users = models.ManyToManyField('authentication.UserProfile', related_name='alex', blank=True)
     views = models.IntegerField('Счётчик просмотров', default=0)
-    blog = models.ForeignKey(Blog, to_field='slug', on_delete=models.CASCADE)
+    blog = models.ForeignKey(Blog, to_field='slug', related_name='posts', on_delete=models.CASCADE)
     tags = models.ManyToManyField(Tag, blank=True)
 
     def __str__(self):
         return self.title
 
     def save(self, *args, **kwargs):
-        if not self.is_published:
-            self.created_at = None
+        if self.is_published:
+            if self.created_at is None:
+                self.created_at = datetime.datetime.now()
         else:
-            self.created_at = datetime.datetime.now()
+            self.created_at = None
+
+        last_created_post = Post.objects.filter(is_published=True, blog__slug=self.blog.slug).latest("post_id")
+        if last_created_post.created_at > self.blog.updated_at:
+            self.blog.updated_at = last_created_post.created_at
+            self.blog.save()
         super(Post, self).save(*args, **kwargs)
 
 
