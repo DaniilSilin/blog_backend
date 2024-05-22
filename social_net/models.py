@@ -31,7 +31,7 @@ class Post(models.Model):
     post_id = models.PositiveIntegerField('ID поста', null=True)
     body = models.TextField('Тело поста')
     is_published = models.BooleanField('Опубликован ли', default=False)
-    created_at = models.DateTimeField('Дата публикации', null=True, blank=True)
+    created_at = models.DateTimeField('Дата публикации', auto_now_add=True)
     likes = models.IntegerField('Счётчик оценок', default=0)
     liked_users = models.ManyToManyField('authentication.UserProfile', related_name='alex', blank=True)
     views = models.IntegerField('Счётчик просмотров', default=0)
@@ -45,13 +45,8 @@ class Post(models.Model):
         if self.is_published:
             if self.created_at is None:
                 self.created_at = datetime.datetime.now()
-        else:
-            self.created_at = None
-
-        last_created_post = Post.objects.filter(is_published=True, blog__slug=self.blog.slug).latest("post_id")
-        if last_created_post.created_at > self.blog.updated_at:
-            self.blog.updated_at = last_created_post.created_at
-            self.blog.save()
+                self.blog.updated_at = self.created_at
+                self.blog.save()
         super(Post, self).save(*args, **kwargs)
 
 

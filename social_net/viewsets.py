@@ -1,6 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
-from rest_framework import status, permissions, viewsets, exceptions
+from rest_framework import status, permissions, viewsets
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 
@@ -25,7 +25,7 @@ class PostPermissions(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         if request.method == 'POST':
-            return bool((request.user and request.user.is_authenticated) and Blog.objects.filter(Q(slug=view.kwargs['slug']) & (Q(owner=request.user) | Q(authors__username__contains=request.user))))
+            return bool(((request.user and request.user.is_authenticated) and Blog.objects.filter(Q(slug=view.kwargs['slug']) & (Q(owner=request.user) | Q(authors__username__contains=request.user))) or Q(request.user.is_staff)))
         else:
             return bool(Post.objects.filter(Q(post_id=view.kwargs['post_id']) & (Q(blog__authors__username__contains=request.user) | Q(blog__owner=request.user.id))) or (request.user and request.user.is_staff))
 
@@ -35,9 +35,9 @@ class CommentaryPermissions(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         if request.method == 'POST':
-            return bool((request.user and request.user.is_authenticated) and (Post.objects.filter(Q(post_id=view.kwargs['post_id']) & Q(blog__slug=view.kwargs['slug']))))
+            return bool(Q(request.user.is_staff) or (request.user and request.user.is_authenticated) and (Post.objects.filter(Q(post_id=view.kwargs['post_id']) & Q(blog__slug=view.kwargs['slug']))))
         else:
-            return bool(Commentary.objects.filter(Q(comment_id=view.kwargs['comment_id']) & Q(post__post_id=view.kwargs['post_id']) & Q(post__blog__slug=view.kwargs['slug']) & (Q(post__blog__owner=request.user.id) | Q(post__blog__authors__username__contains=request.user) | Q(author=request.user)) or (request.user and request.user.is_staff)))
+            return bool(Commentary.objects.filter(Q(comment_id=view.kwargs['comment_id']) & Q(post__post_id=view.kwargs['post_id']) & Q(post__blog__slug=view.kwargs['slug']) & (Q(post__blog__owner=request.user.id) | Q(post__blog__authors__username__contains=request.user) | Q(author=request.user.id)) or (request.user and request.user.is_staff)))
 
         # if bool(Post.objects.filter(Q(post_id=view.kwargs['post_id']) & Q(blog__slug=view.kwargs['slug']) & ((Q(blog__authors__username__contains=request.user) | Q(blog__owner=request.user) | Q(request.user.is_staff)) | Q(is_published=True)))):
         #     return True
@@ -284,7 +284,7 @@ class PostPage(viewsets.ModelViewSet):
         serializer = CreatePostSerializer(instance=post, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        # serial = PostSerializer(serializer, many=False)
+        serial = PostSerializer(serializer, many=False)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
@@ -295,6 +295,7 @@ class PostPage(viewsets.ModelViewSet):
         is_published = serializer.data['is_published']
         author = get_object_or_404(UserProfile, username=request.user)
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
+        tags = serializer.data['tags']
         blog.count_of_posts += 1
         blog.save(update_fields=("count_of_posts",))
         post_id = blog.count_of_posts
@@ -309,8 +310,9 @@ class PostPage(viewsets.ModelViewSet):
         )
 
         post.save()
+        post.tags.set(tags)
 
-        serial = PostSerializer(post)
+        serial = CreatePostSerializer(post)
         return Response(serial.data, status=status.HTTP_201_CREATED)
 
 
