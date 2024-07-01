@@ -20,7 +20,7 @@ class BlogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Blog
-        fields = ('title', 'slug', 'description', 'created_at', 'updated_at', 'owner', 'authors')
+        fields = ('title', 'slug', 'description', 'created_at', 'updated_at', 'count_of_posts', 'count_of_commentaries', 'owner', 'authors')
 
 
 class CreateBlogSerializer(serializers.ModelSerializer):
@@ -34,7 +34,8 @@ class UpdateBlogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Blog
-        fields = ('title', 'description', 'created_at', 'updated_at', 'authors')
+        fields = ('title', 'slug', 'description', 'created_at', 'count_of_posts', 'count_of_commentaries', 'updated_at', 'authors')
+        read_only_fields = ('slug', 'created_at', 'updated_at', 'count_of_posts', 'count_of_commentaries')
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -45,13 +46,24 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
+        depth = 1
         fields = ('title', 'author', 'body', 'is_published', 'created_at', 'likes', 'views', 'post_id', 'blog', 'tags', 'liked_users')
+        read_only_fields = ('slug', 'created_at', 'updated_at', 'count_of_posts', 'count_of_commentaries')
 
 
 class CreatePostSerializer(serializers.ModelSerializer):
+    # tags = TagSerializer(read_only=True)
     class Meta:
         model = Post
         fields = ('title', 'body', 'is_published', 'tags')
+
+
+class UpdatePostSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Post
+        fields = ('title', 'body', 'is_published', 'created_at', 'likes', 'views', 'tags', 'liked_users')
+        read_only_fields = ('created_at', 'likes', 'views', 'liked_users')
 
 
 class CreateCommentarySerializer(serializers.ModelSerializer):

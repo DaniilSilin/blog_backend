@@ -3,11 +3,12 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework import status, permissions, viewsets
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from django.http import Http404
 
 from authentication.models import UserProfile
 from .models import Blog, Post, Commentary, Tag
 from .serializers import BlogSerializer, CreateBlogSerializer, UpdateBlogSerializer, PostSerializer, \
-    CreatePostSerializer, CreateCommentarySerializer, CommentarySerializer, SubscriptionList
+    CreatePostSerializer, CreateCommentarySerializer, CommentarySerializer, SubscriptionList, UpdatePostSerializer
 
 
 class BlogPermissions(permissions.BasePermission):
@@ -17,7 +18,7 @@ class BlogPermissions(permissions.BasePermission):
         if request.method == 'POST':
             return bool(request.user and request.user.is_authenticated)
         else:
-            return bool(Blog.objects.filter(slug=view.kwargs['slug']) and (Blog.objects.filter(Q(slug=view.kwargs['slug']) & Q(owner=request.user.id)) or (request.user.is_staff and request.user.is_authenticated and request.user)))
+            return bool(Blog.objects.filter(slug=view.kwargs['slug']) and (Blog.objects.filter(Q(slug=view.kwargs['slug']) & Q(owner=request.user.id)) or (not request.user.is_anonymous and request.user.is_admin and request.user)))
 
 
 class PostPermissions(permissions.BasePermission):
@@ -25,9 +26,17 @@ class PostPermissions(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         if request.method == 'POST':
-            return bool(((request.user and request.user.is_authenticated) and Blog.objects.filter(Q(slug=view.kwargs['slug']) & (Q(owner=request.user) | Q(authors__username__contains=request.user))) or Q(request.user.is_staff)))
+            return bool(((request.user and request.user.is_authenticated) and Blog.objects.filter(Q(slug=view.kwargs['slug']) & (Q(owner=request.user) | Q(authors__username__contains=request.user))) | Q(not request.user.is_anonymous and request.user.is_admin)))
         else:
-            return bool(Post.objects.filter(Q(post_id=view.kwargs['post_id']) & (Q(blog__authors__username__contains=request.user) | Q(blog__owner=request.user.id))) or (request.user and request.user.is_staff))
+            return bool(Post.objects.filter (Q(post_id=view.kwargs['post_id']) & (Q(blog__authors__username__contains=request.user) | Q(blog__owner=request.user.id))) or (request.user and not request.user.is_anonymous and request.user.is_admin))
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            if bool(obj.is_published):
+                return True
+            if not (obj.blog.authors.filter(username=request.user) or obj.author == request.user or obj.blog.owner == request.user or (request.user and not request.user.is_anonymous and request.user.is_admin)):
+                raise Http404
+        return True
 
 
 class CommentaryPermissions(permissions.BasePermission):
@@ -35,14 +44,17 @@ class CommentaryPermissions(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         if request.method == 'POST':
-            return bool(Q(request.user.is_staff) or (request.user and request.user.is_authenticated) and (Post.objects.filter(Q(post_id=view.kwargs['post_id']) & Q(blog__slug=view.kwargs['slug']))))
+            return bool(not request.user.is_anonymous and request.user and request.user.is_admin) or (request.user and request.user.is_authenticated) and (Post.objects.filter(Q(post_id=view.kwargs['post_id']) & Q(blog__slug=view.kwargs['slug'])))
         else:
-            return bool(Commentary.objects.filter(Q(comment_id=view.kwargs['comment_id']) & Q(post__post_id=view.kwargs['post_id']) & Q(post__blog__slug=view.kwargs['slug']) & (Q(post__blog__owner=request.user.id) | Q(post__blog__authors__username__contains=request.user) | Q(author=request.user.id)) or (request.user and request.user.is_staff)))
+            return bool(Commentary.objects.filter(Q(comment_id=view.kwargs['comment_id']) & Q(post__post_id=view.kwargs['post_id']) & Q(post__blog__slug=view.kwargs['slug']) & (Q(post__blog__owner=request.user.id) | Q(post__blog__authors__username__contains=request.user) | Q(author=request.user.id))) or (not request.user.is_anonymous and request.user.is_admin))
 
-        # if bool(Post.objects.filter(Q(post_id=view.kwargs['post_id']) & Q(blog__slug=view.kwargs['slug']) & ((Q(blog__authors__username__contains=request.user) | Q(blog__owner=request.user) | Q(request.user.is_staff)) | Q(is_published=True)))):
-        #     return True
-        # else:
-        #     raise exceptions.NotFound
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            if obj.post.is_published:
+                return True
+            if not (obj.post.blog.authors.filter(username=request.user) or obj.post.author == request.user or obj.post.blog.owner == request.user or (request.user and not request.user.is_anonymous and request.user.is_admin)):
+                raise Http404
+        return True
 
 
 class ListSetPagination(PageNumberPagination):
@@ -121,7 +133,7 @@ class BlogPage(viewsets.ModelViewSet):
         serializer = UpdateBlogSerializer(instance=blog, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        # instance_serializer = UpdateBlogSerializer(serializer)
+        # instance_serializer = BlogSerializer(serializer)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
@@ -142,7 +154,6 @@ class BlogPage(viewsets.ModelViewSet):
 
         blog.save()
         blog.authors.set(authors)
-
         serial = BlogSerializer(blog)
         return Response(serial.data, status=status.HTTP_201_CREATED)
 
@@ -158,7 +169,7 @@ class PostList(viewsets.ModelViewSet):
     queryset = Post.objects.filter(is_published=True).order_by('-created_at')
     serializer_class = PostSerializer
     pagination_class = ListSetPagination
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [PostPermissions]
 
     def list(self, request, *args, **kwargs):
         queryset = self.queryset
@@ -216,7 +227,6 @@ class PostList(viewsets.ModelViewSet):
         queryset = queryset.filter(**query_dict)
         if len(order_array):
             queryset = queryset.order_by(*order_array).distinct()
-
         paginatedResult = self.paginate_queryset(queryset)
         serial = PostSerializer(paginatedResult, many=True)
         return Response(serial.data, status=status.HTTP_200_OK)
@@ -281,7 +291,7 @@ class PostPage(viewsets.ModelViewSet):
         request.data['is_published'] = request.data.get('is_published', 'false')
         post.tags.clear()
         request.data._mutable = False
-        serializer = CreatePostSerializer(instance=post, data=request.data, partial=True)
+        serializer = UpdatePostSerializer(instance=post, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         serial = PostSerializer(serializer, many=False)
@@ -312,7 +322,7 @@ class PostPage(viewsets.ModelViewSet):
         post.save()
         post.tags.set(tags)
 
-        serial = CreatePostSerializer(post)
+        serial = PostSerializer(post)
         return Response(serial.data, status=status.HTTP_201_CREATED)
 
 
