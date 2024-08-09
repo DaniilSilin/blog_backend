@@ -1,3 +1,4 @@
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import status, permissions, viewsets
@@ -13,46 +14,60 @@ from .serializers import BlogSerializer, CreateBlogSerializer, UpdateBlogSeriali
 
 class BlogPermissions(permissions.BasePermission):
     def has_permission(self, request, view):
+        IsUserNotAnonymousAndIsAdmin = (request.user and not request.user.is_anonymous)
         if request.method in permissions.SAFE_METHODS:
             return True
         if request.method == 'POST':
-            return bool(request.user and request.user.is_authenticated)
+            return IsAuthenticated
         else:
-            return bool(Blog.objects.filter(slug=view.kwargs['slug']) and (Blog.objects.filter(Q(slug=view.kwargs['slug']) & Q(owner=request.user.id)) or (not request.user.is_anonymous and request.user.is_admin and request.user)))
+            IsBlogExistsAndOwner = Blog.objects.filter(slug=view.kwargs['slug'], owner=request.user.id)
+            return bool(IsBlogExistsAndOwner or IsUserNotAnonymousAndIsAdmin)
 
 
 class PostPermissions(permissions.BasePermission):
     def has_permission(self, request, view):
+        IsAdmin = request.user.is_admin
         if request.method in permissions.SAFE_METHODS:
             return True
         if request.method == 'POST':
-            return bool(((request.user and request.user.is_authenticated) and Blog.objects.filter(Q(slug=view.kwargs['slug']) & (Q(owner=request.user) | Q(authors__username__contains=request.user))) | Q(not request.user.is_anonymous and request.user.is_admin)))
+            IsBlogOwnerOrOneOfAuthors = Blog.objects.filter(Q(slug=view.kwargs['slug']) & (Q(owner=request.user.id) | Q(authors__username__contains=request.user)))
+            return bool((IsBlogOwnerOrOneOfAuthors or IsAdmin) and IsAuthenticated)
         else:
-            return bool(Post.objects.filter (Q(post_id=view.kwargs['post_id']) & (Q(blog__authors__username__contains=request.user) | Q(blog__owner=request.user.id))) or (request.user and not request.user.is_anonymous and request.user.is_admin))
+            IsPostOwnerOrOneOfAuthors = Post.objects.filter(Q(post_id=view.kwargs['post_id']) & Q(blog__slug=view.kwargs['slug']) & (Q(blog__authors__username__contains=request.user) | Q(blog__owner=request.user)))
+            return bool((IsPostOwnerOrOneOfAuthors or IsAdmin) and IsAuthenticated)
 
     def has_object_permission(self, request, view, obj):
+        IsAdmin = request.user.is_admin
+        IsBlogOwner = obj.blog.owner == request.user
+        OneOfBlogAuthors = obj.blog.authors.filter(username=request.user)
         if request.method in permissions.SAFE_METHODS:
             if bool(obj.is_published):
                 return True
-            if not (obj.blog.authors.filter(username=request.user) or obj.author == request.user or obj.blog.owner == request.user or (request.user and not request.user.is_anonymous and request.user.is_admin)):
+            if not (IsBlogOwner or OneOfBlogAuthors or IsAdmin) and IsAuthenticated:
                 raise Http404
         return True
 
 
 class CommentaryPermissions(permissions.BasePermission):
     def has_permission(self, request, view):
+        IsAdmin = request.user.is_admin
         if request.method in permissions.SAFE_METHODS:
             return True
         if request.method == 'POST':
-            return bool(not request.user.is_anonymous and request.user and request.user.is_admin) or (request.user and request.user.is_authenticated) and (Post.objects.filter(Q(post_id=view.kwargs['post_id']) & Q(blog__slug=view.kwargs['slug'])))
+            IsPostAccessibleForComments = Post.objects.filter(post_id=view.kwargs['post_id'], blog__slug=view.kwargs['slug'])
+            return bool(IsPostAccessibleForComments and IsAuthenticated)
         else:
-            return bool(Commentary.objects.filter(Q(comment_id=view.kwargs['comment_id']) & Q(post__post_id=view.kwargs['post_id']) & Q(post__blog__slug=view.kwargs['slug']) & (Q(post__blog__owner=request.user.id) | Q(post__blog__authors__username__contains=request.user) | Q(author=request.user.id))) or (not request.user.is_anonymous and request.user.is_admin))
+            IsCommentExists = Commentary.objects.filter(Q(comment_id=view.kwargs['comment_id']) & Q(post__post_id=view.kwargs['post_id']) & Q(post__blog__slug=view.kwargs['slug']) & (Q(post__blog__owner=request.user.id) | Q(post__blog__authors__username__contains=request.user) | Q(author=request.user.id)))
+            return bool(IsCommentExists and (not request.user.is_anonymous and IsAdmin))
 
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
+            IsAdmin = request.user.is_admin
+            IsBlogAuthor = obj.post.blog.authors.filter(username=request.user)
+            IsBlogOwner = obj.post.blog.owner == request.user
             if obj.post.is_published:
                 return True
-            if not (obj.post.blog.authors.filter(username=request.user) or obj.post.author == request.user or obj.post.blog.owner == request.user or (request.user and not request.user.is_anonymous and request.user.is_admin)):
+            if not ((IsBlogAuthor or IsBlogOwner or IsAdmin) and IsAuthenticated):
                 raise Http404
         return True
 
