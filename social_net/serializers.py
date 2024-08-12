@@ -31,11 +31,12 @@ class CreateBlogSerializer(serializers.ModelSerializer):
 
 
 class UpdateBlogSerializer(serializers.ModelSerializer):
+    owner = serializers.CharField(source='owner.username', read_only=True)
 
     class Meta:
         model = Blog
-        fields = ('title', 'slug', 'description', 'created_at', 'count_of_posts', 'count_of_commentaries', 'updated_at', 'authors')
-        read_only_fields = ('slug', 'created_at', 'updated_at', 'count_of_posts', 'count_of_commentaries')
+        fields = ('title', 'slug', 'description', 'created_at', 'updated_at', 'owner', 'count_of_posts', 'count_of_commentaries', 'authors')
+        read_only_fields = ('slug', 'created_at', 'updated_at', 'count_of_posts', 'owner', 'count_of_commentaries')
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -59,17 +60,20 @@ class CreatePostSerializer(serializers.ModelSerializer):
 
 
 class UpdatePostSerializer(serializers.ModelSerializer):
+    blog = BlogSerializer(read_only=True)
+    author = serializers.CharField(source='author.username', read_only=True)
 
     class Meta:
         model = Post
-        fields = ('title', 'body', 'is_published', 'created_at', 'likes', 'views', 'tags', 'liked_users')
-        read_only_fields = ('created_at', 'likes', 'views', 'liked_users')
+        fields = ('title', 'body', 'author', 'is_published', 'created_at', 'likes', 'views', 'post_id', 'blog', 'tags', 'liked_users')
+        read_only_fields = ('created_at', 'author', 'likes', 'views', 'liked_users', 'blog', 'post_id')
 
 
 class CreateCommentarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Commentary
-        fields = ('body',)
+        fields = ('body', 'author', 'created_at')
+        read_only_fields = ('author', 'created_at')
 
 
 class CommentarySerializer(serializers.ModelSerializer):
