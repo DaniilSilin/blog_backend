@@ -11,6 +11,8 @@ from .models import Blog, Post, Commentary, Tag
 from .serializers import BlogSerializer, CreateBlogSerializer, UpdateBlogSerializer, PostSerializer, \
     CreatePostSerializer, CreateCommentarySerializer, CommentarySerializer, SubscriptionList, UpdatePostSerializer
 
+from .permissions import IsAuthenticatedOrReadOnly
+
 
 class BlogPermissions(permissions.BasePermission):
     def has_permission(self, request, view):
@@ -418,7 +420,7 @@ class BlogSubscribe(viewsets.ModelViewSet):
 class SubscriptionListViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = SubscriptionList
-    pagination_class = ListSetPagination
+    # pagination_class = ListSetPagination
     permission_classes = [permissions.AllowAny]
 
     def filter_queryset(self, queryset):

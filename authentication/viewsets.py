@@ -8,22 +8,26 @@ from .models import UserProfile
 from .serializers import LoginSerializer, RegisterSerializer, LogoutSerializer
 
 
-class LoginView(viewsets.ModelViewSet):
-    queryset = UserProfile.objects.all()
-    serializer_class = LoginSerializer
-    permission_classes = (permissions.AllowAny,)
+from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.authentication import TokenAuthentication
 
-    def retrieve(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        username = serializer.validated_data['username']
-        password = serializer.validated_data['password']
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            return Response('Success', status=status.HTTP_200_OK)
+
+class LoginView(APIView):
+    authentication_classes = [TokenAuthentication]
+
+    def post(self, request):
+        print('awdawdawd')
+        # Your authentication logic here
+        user = authenticate(username=request.data['username'], password=request.data['password'])
+
+        if user:
+            print(Token)
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({'token': token.key})
         else:
-            return Response('UnSuccess', status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid credentials'}, status=401)
 
 
 class RegisterView(viewsets.ModelViewSet):

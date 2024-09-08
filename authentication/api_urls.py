@@ -2,7 +2,7 @@ from django.urls import path
 from .viewsets import LoginView, RegisterView, LogoutView
 
 register = RegisterView.as_view({'post': 'create'})
-login = LoginView.as_view({'post': 'retrieve'})
+login = LoginView.as_view()
 logout = LogoutView.as_view({'get': 'retrieve'})
 
 urlpatterns = [

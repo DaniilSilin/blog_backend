@@ -32,11 +32,25 @@ class CreateBlogSerializer(serializers.ModelSerializer):
 
 class UpdateBlogSerializer(serializers.ModelSerializer):
     owner = serializers.CharField(source='owner.username', read_only=True)
+    authors = UserSerializer(many=True)
 
     class Meta:
         model = Blog
         fields = ('title', 'slug', 'description', 'created_at', 'updated_at', 'owner', 'count_of_posts', 'count_of_commentaries', 'authors')
         read_only_fields = ('slug', 'created_at', 'updated_at', 'count_of_posts', 'owner', 'count_of_commentaries')
+
+    def update(self, instance, validated_data):
+        authors_data = validated_data.pop('username')
+        instance.title = validated_data.get('title', instance.title)
+        instance.save()
+
+        # Обновляем Many-to-Many поле
+        instance.authors.clear()
+        for author_data in authors_data:
+            author, created = UserProfile.objects.get_or_create(username=author_data['username'])
+            instance.authors.add(author)
+
+        return instance
 
 
 class PostSerializer(serializers.ModelSerializer):
