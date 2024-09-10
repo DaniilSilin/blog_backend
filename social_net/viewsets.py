@@ -7,9 +7,9 @@ from django.db.models import Q
 from django.http import Http404
 
 from authentication.models import UserProfile
-from .models import Blog, Post, Commentary, Tag
+from .models import Blog, Post, Commentary, Tag, Invite
 from .serializers import BlogSerializer, CreateBlogSerializer, UpdateBlogSerializer, PostSerializer, \
-    CreatePostSerializer, CreateCommentarySerializer, CommentarySerializer, SubscriptionList, UpdatePostSerializer
+    CreatePostSerializer, CreateCommentarySerializer, CommentarySerializer, SubscriptionList, UpdatePostSerializer, InviteUserSerializer
 
 from .permissions import IsAuthenticatedOrReadOnly
 
@@ -455,3 +455,36 @@ class LikeViewSet(viewsets.ModelViewSet):
             return Response('removed', status=status.HTTP_200_OK)
         else:
             return Response('already removed', status=status.HTTP_200_OK)
+
+
+class InvitationView(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = InviteUserSerializer
+
+    def send_invite(self, request):
+        serializer = InviteUserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        author = get_object_or_404(UserProfile, username=request.user)
+        description = serializer.data['description']
+        addressee = get_object_or_404(UserProfile, username=request.user)
+
+        invite = Invite(
+            author=author,
+            description=description,
+            addressee=addressee,
+        )
+
+        invite.save()
+        serial = InviteUserSerializer(invite, many=False)
+        return Response(serial.data, status=status.HTTP_200_OK)
+
+
+class InviteReactView(viewsets.ModelViewSet):
+    serializer_class = InviteUserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def accept_invite(self, request):
+        pass
+
+    def reject_invite(self, request):
+        pass

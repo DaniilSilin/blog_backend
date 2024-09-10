@@ -59,3 +59,15 @@ class Commentary(models.Model):
 
     def __str__(self):
         return self.body
+
+
+class Invite(models.Model):
+    admin = models.ForeignKey(UserProfile, related_name='user_profile', on_delete=models.CASCADE)
+    created_at = models.DateTimeField('Дата создания', auto_now_add=True)
+    description = models.TextField('Описание')
+    addressee = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    status = models.BooleanField('Статус приглашения', default=False)
+    blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.admin

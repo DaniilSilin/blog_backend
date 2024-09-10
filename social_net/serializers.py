@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Blog, Post, Commentary, UserProfile, Tag
+from .models import Blog, Post, Commentary, UserProfile, Tag, Invite
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -104,3 +104,9 @@ class SubscriptionList(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = ('subscriptions',)
+
+
+class InviteUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Invite
+        fields = ['author', 'description', 'created_at', 'addressee']

@@ -18,12 +18,11 @@ class LoginView(APIView):
     authentication_classes = [TokenAuthentication]
 
     def post(self, request):
-        print('awdawdawd')
+
         # Your authentication logic here
         user = authenticate(username=request.data['username'], password=request.data['password'])
 
         if user:
-            print(Token)
             token, created = Token.objects.get_or_create(user=user)
             return Response({'token': token.key})
         else:
@@ -50,7 +49,7 @@ class RegisterView(viewsets.ModelViewSet):
         user.set_password(password)
         user.save()
 
-        return redirect('/login/')
+        return Response(status=status.HTTP_200_OK)
 
 
 class LogoutView(viewsets.ModelViewSet):
@@ -59,5 +58,5 @@ class LogoutView(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         logout(request)
-        return HttpResponseRedirect('/login/')
+        return Response(status=status.HTTP_200_OK)
 

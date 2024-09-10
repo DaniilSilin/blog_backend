@@ -1,5 +1,6 @@
 from django.urls import path
-from .viewsets import BlogList, BlogPage, PostList, MyPosts, BlogPosts, PostPage, CommentaryPage, BlogSubscribe, SubscriptionListViewSet, LikeViewSet
+from .viewsets import BlogList, BlogPage, PostList, MyPosts, BlogPosts, PostPage, CommentaryPage, BlogSubscribe,\
+    SubscriptionListViewSet, LikeViewSet, InvitationView, InviteReactView
 
 blog_list = BlogList.as_view({'get': 'list'})
 blog_page = BlogPage.as_view({'put': 'update', 'get': 'retrieve', 'delete': 'destroy'})
@@ -21,6 +22,11 @@ post_create = PostPage.as_view({'post': 'create'})
 create_commentary = CommentaryPage.as_view({'post': 'create'})
 commentary = CommentaryPage.as_view({'get': 'retrieve', 'delete': 'destroy', 'put': 'update'})
 
+invite = InvitationView.as_view({'post': 'send_invite'})
+invite_accept = InviteReactView.as_view({'post': 'accept_invite'})
+invite_reject = InviteReactView.as_view({'post': 'reject_invite'})
+
+
 urlpatterns = [
     path('blog/list/', blog_list, name='blog_list'),
     path('blog/create/', blog_create, name='create_blog'),
@@ -41,5 +47,9 @@ urlpatterns = [
     path('blog/<slug:slug>/post/<int:post_id>/', post_page, name='post_page'),
 
     path('blog/<slug:slug>/post/<int:post_id>/comment/create/', create_commentary, name='create_commentary'),
-    path('blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/', commentary, name='commentary')
+    path('blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/', commentary, name='commentary'),
+
+    path('blog/<slug:slug>/invite/create', invite, name='invite'),
+    path('blog/<slug:slug>/invite/<int:invite_id>/accept/', invite_accept, name='accept_invite'),
+    path('blog/<slug:slug>/invite/<int:invite_id>/reject/', invite_reject, name='reject_invite')
 ]
