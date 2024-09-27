@@ -3,15 +3,16 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import status, permissions, viewsets
 from django.shortcuts import get_object_or_404
-from django.db.models import Q
+from django.db.models import Q, Count, Subquery, Exists, OuterRef
 from django.http import Http404
 
 from authentication.models import UserProfile
 from .models import Blog, Post, Commentary, Tag, Invite
-from .serializers import BlogSerializer, CreateBlogSerializer, UpdateBlogSerializer, PostSerializer, \
-    CreatePostSerializer, CreateCommentarySerializer, CommentarySerializer, SubscriptionList, UpdatePostSerializer, InviteUserSerializer
-
-from .permissions import IsAuthenticatedOrReadOnly
+from .serializers import (BlogSerializer, CreateBlogSerializer, UpdateBlogSerializer, PostSerializer, \
+                          CreatePostSerializer, CreateCommentarySerializer, CommentarySerializer, SubscriptionList,
+                          UpdatePostSerializer,
+                          InviteUserSerializer, InviteListUserSerializer, IsBlogOwnerSerializer,
+                          IsBlogAvailableSerializer)
 
 
 class BlogPermissions(permissions.BasePermission):
@@ -160,19 +161,16 @@ class BlogPage(viewsets.ModelViewSet):
         slug = serializer.data['slug']
         description = serializer.data['description']
         owner = get_object_or_404(UserProfile, username=request.user)
-        authors = serializer.data['authors']
 
         blog = Blog(
             title=title,
             slug=slug,
             description=description,
-            owner=owner,
+            owner=owner
         )
 
         blog.save()
-        blog.authors.set(authors)
-        serial = BlogSerializer(blog)
-        return Response(serial.data, status=status.HTTP_201_CREATED)
+        return Response({ 'status': 'success' }, status=status.HTTP_201_CREATED)
 
     def retrieve(self, request, *args, **kwargs):
         try:
@@ -244,7 +242,8 @@ class PostList(viewsets.ModelViewSet):
         queryset = queryset.filter(**query_dict)
         if len(order_array):
             queryset = queryset.order_by(*order_array).distinct()
-        paginatedResult = self.paginate_queryset(queryset)
+        result = queryset.annotate(isLiked=Count('liked_users'))
+        paginatedResult = self.paginate_queryset(result)
         serial = PostSerializer(paginatedResult, many=True)
         return Response(serial.data, status=status.HTTP_200_OK)
 
@@ -257,8 +256,8 @@ class MyPosts(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.queryset.filter(author=request.user)
-        paginatedResult = self.paginate_queryset(queryset)
-        serializer = PostSerializer(paginatedResult, many=True)
+        # paginatedResult = self.paginate_queryset(queryset)
+        serializer = PostSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -333,12 +332,11 @@ class PostPage(viewsets.ModelViewSet):
             is_published=is_published,
             author=author,
             blog=blog,
-            post_id=post_id
+            post_id=post_id,
+            tags=tags
         )
 
         post.save()
-        post.tags.set(tags)
-
         serial = PostSerializer(post)
         return Response(serial.data, status=status.HTTP_201_CREATED)
 
@@ -423,9 +421,12 @@ class SubscriptionListViewSet(viewsets.ModelViewSet):
     # pagination_class = ListSetPagination
     permission_classes = [permissions.AllowAny]
 
-    def filter_queryset(self, queryset):
-        return self.queryset.filter(username=self.kwargs['username'])
-
+    def list(self, request, *args, **kwargs):
+        user = get_object_or_404(UserProfile, username=self.kwargs['username'])
+        queryset = self.queryset.filter(username=user)
+        if user:
+            result = SubscriptionList(queryset, many=True)
+            return Response(result.data, status=status.HTTP_200_OK)
 
 class LikeViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
@@ -464,14 +465,16 @@ class InvitationView(viewsets.ModelViewSet):
     def send_invite(self, request):
         serializer = InviteUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        author = get_object_or_404(UserProfile, username=request.user)
+        admin = get_object_or_404(UserProfile, pk=serializer.data['admin'])
         description = serializer.data['description']
-        addressee = get_object_or_404(UserProfile, username=request.user)
+        addressee = get_object_or_404(UserProfile, username=serializer.data['addressee'])
+        blog = get_object_or_404(Blog, slug=serializer.data['blog'])
 
         invite = Invite(
-            author=author,
+            admin=admin,
             description=description,
             addressee=addressee,
+            blog=blog
         )
 
         invite.save()
@@ -479,12 +482,79 @@ class InvitationView(viewsets.ModelViewSet):
         return Response(serial.data, status=status.HTTP_200_OK)
 
 
+class InviteListView(viewsets.ModelViewSet):
+    queryset = Invite.objects.all()
+    serializer_class = InviteListUserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.queryset.filter(addressee=request.user)
+        result = InviteListUserSerializer(queryset, many=True)
+        return Response(result.data, status=status.HTTP_200_OK)
+
+
 class InviteReactView(viewsets.ModelViewSet):
+    queryset = Invite.objects.all()
     serializer_class = InviteUserSerializer
     permission_classes = [IsAuthenticated]
 
-    def accept_invite(self, request):
-        pass
+    def accept_invite(self, request, pk):
+        invite = get_object_or_404(Invite, pk=self.kwargs['pk'])
+        if invite.addressee == request.user and invite.status is None:
+            invite.blog.authors.add(invite.addressee)
+            invite.status = True
+            invite.save()
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
     def reject_invite(self, request):
+        invite = get_object_or_404(Invite, pk=self.kwargs['pk'])
+        if invite.addressee == request.user and invite.status is None:
+            invite.status = False
+            invite.save()
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+class LeaveBlogView(viewsets.ModelViewSet):
+    queryset = Blog.objects.all()
+    serializer_class = BlogSerializer
+    permission_classes = [IsAuthenticated]
+
+    def leave_blog(self, request):
+        blog = get_object_or_404(Blog, blog=self.kwargs['slug'])
+        if blog.authors.filter(username=request.user.username).exists():
+            blog.authors.remove(user=request.user)
+            return Response(status.HTTP_200_OK)
+        else:
+            return Response(status.HTTP_403_FORBIDDEN)
+
+class KickUserView(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def kick_user(self, request):
+        # blog = get_object_or_404(Blog, blog=self.kwargs['slug'])
+        # user = get_object_or_404(UserProfile, username=self.kwargs['username'])
         pass
+
+class IsBlogOwner(viewsets.ModelViewSet):
+    queryset = Blog.objects.all()
+    serializer_class = IsBlogOwnerSerializer
+    permission_classes = [IsAuthenticated]
+
+    def is_blog_owner(self, request):
+        queryset = self.queryset.filter(owner=request.user)
+        result = IsBlogOwnerSerializer(queryset, many=True)
+        return Response(result.data, status=status.HTTP_200_OK)
+
+class IsSlugAvailable(viewsets.ModelViewSet):
+    queryset = Blog.objects.all()
+    serializer_class = IsBlogAvailableSerializer
+
+    def is_slug_available(self, request, slug):
+        blog = self.queryset.filter(slug=slug).exists()
+        if blog:
+            return Response('Slug недоступен', status=status.HTTP_200_OK)
+        else:
+            return Response('Slug доступен', status=status.HTTP_200_OK)

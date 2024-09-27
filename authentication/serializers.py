@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import UserProfile
+from social_net.models import Blog
 
 
 class LoginSerializer(serializers.ModelSerializer):
@@ -38,3 +39,8 @@ class LogoutSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = ('username', 'password')
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = '__all__'

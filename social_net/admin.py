@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Blog, Post, UserProfile, Commentary, Tag
+from .models import Blog, Post, UserProfile, Commentary, Tag, Invite
 
 
 class AdminPosts(admin.ModelAdmin):
@@ -17,6 +17,11 @@ class AdminCommentary(admin.ModelAdmin):
     list_display = ('author', 'created_at', 'body', 'comment_id', 'post')
 
 
+class AdminInvite(admin.ModelAdmin):
+    model = Invite
+    list_display = ('admin', 'pk', 'description', 'addressee', 'blog')
+
+
 class AdminTags(admin.ModelAdmin):
     model = Tag
     list_display = ('name',)
@@ -26,3 +31,4 @@ admin.site.register(Post, AdminPosts)
 admin.site.register(Blog, AdminBlog)
 admin.site.register(Commentary, AdminCommentary)
 admin.site.register(Tag, AdminTags)
+admin.site.register(Invite, AdminInvite)

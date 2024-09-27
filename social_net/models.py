@@ -36,7 +36,7 @@ class Post(models.Model):
     liked_users = models.ManyToManyField('authentication.UserProfile', related_name='alex', blank=True)
     views = models.IntegerField('Счётчик просмотров', default=0)
     blog = models.ForeignKey(Blog, to_field='slug', related_name='posts', on_delete=models.CASCADE)
-    tags = models.ManyToManyField(Tag, blank=True)
+    tags = models.TextField('Тэги', null=True)
 
     def __str__(self):
         return self.title
@@ -56,6 +56,7 @@ class Commentary(models.Model):
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     comment_id = models.PositiveIntegerField('ID комментария', null=True)
+    # reply_to = models.ForeignKey('Commentary', null=True, on_delete=models.CASCADE, related_name='replies')
 
     def __str__(self):
         return self.body
@@ -66,8 +67,8 @@ class Invite(models.Model):
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
     description = models.TextField('Описание')
     addressee = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    status = models.BooleanField('Статус приглашения', default=False)
+    status = models.BooleanField('Статус приглашения', null=True)
     blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.admin
+        return str(self.admin)

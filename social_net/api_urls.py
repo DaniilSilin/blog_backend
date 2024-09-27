@@ -1,6 +1,7 @@
 from django.urls import path
-from .viewsets import BlogList, BlogPage, PostList, MyPosts, BlogPosts, PostPage, CommentaryPage, BlogSubscribe,\
-    SubscriptionListViewSet, LikeViewSet, InvitationView, InviteReactView
+from .viewsets import BlogList, BlogPage, PostList, MyPosts, BlogPosts, PostPage, CommentaryPage, BlogSubscribe, \
+    SubscriptionListViewSet, LikeViewSet, InvitationView, InviteReactView, InviteListView, LeaveBlogView, KickUserView, \
+    IsBlogOwner, IsSlugAvailable
 
 blog_list = BlogList.as_view({'get': 'list'})
 blog_page = BlogPage.as_view({'put': 'update', 'get': 'retrieve', 'delete': 'destroy'})
@@ -23,9 +24,15 @@ create_commentary = CommentaryPage.as_view({'post': 'create'})
 commentary = CommentaryPage.as_view({'get': 'retrieve', 'delete': 'destroy', 'put': 'update'})
 
 invite = InvitationView.as_view({'post': 'send_invite'})
+invite_list = InviteListView.as_view({'get': 'list'})
 invite_accept = InviteReactView.as_view({'post': 'accept_invite'})
 invite_reject = InviteReactView.as_view({'post': 'reject_invite'})
 
+leave_blog = LeaveBlogView.as_view({'post': 'leave_blog'})
+kick_user = KickUserView.as_view({'post': 'kick_user'})
+
+is_blog_owner = IsBlogOwner.as_view({'get': 'is_blog_owner'})
+is_slug_available = IsSlugAvailable.as_view({'get': 'is_slug_available'})
 
 urlpatterns = [
     path('blog/list/', blog_list, name='blog_list'),
@@ -49,7 +56,14 @@ urlpatterns = [
     path('blog/<slug:slug>/post/<int:post_id>/comment/create/', create_commentary, name='create_commentary'),
     path('blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/', commentary, name='commentary'),
 
-    path('blog/<slug:slug>/invite/create', invite, name='invite'),
-    path('blog/<slug:slug>/invite/<int:invite_id>/accept/', invite_accept, name='accept_invite'),
-    path('blog/<slug:slug>/invite/<int:invite_id>/reject/', invite_reject, name='reject_invite')
+    path('invite/create/', invite, name='invite'),
+    path('invite/list/', invite_list, name='invite_list'),
+    path('invite/<int:pk>/accept/', invite_accept, name='accept_invite'),
+    path('invite/<int:pk>/reject/', invite_reject, name='reject_invite'),
+
+    path('blog/<slug:slug>/leave/', leave_blog, name='leave_blog'),
+    path('blog/<slug:slug>/kick/<slug:username>/', kick_user, name='kick_user'),
+
+    path('blog_owner/list/', is_blog_owner, name='is_blog_owner'),
+    path('blog/<slug:slug>/available/', is_slug_available, name='is_slug_available')
 ]

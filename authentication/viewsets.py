@@ -5,7 +5,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.shortcuts import redirect
 
 from .models import UserProfile
-from .serializers import LoginSerializer, RegisterSerializer, LogoutSerializer
+from .serializers import LoginSerializer, RegisterSerializer, LogoutSerializer, UserSerializer
 
 
 from rest_framework.authtoken.models import Token
@@ -59,4 +59,11 @@ class LogoutView(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         logout(request)
         return Response(status=status.HTTP_200_OK)
+
+class UserDataView(viewsets.ModelViewSet):
+    serializer_class = UserSerializer
+    permission_classes = (permissions.AllowAny,)
+
+    def retrieve(self, request, *args, **kwargs):
+        return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
 

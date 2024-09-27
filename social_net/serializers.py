@@ -20,14 +20,14 @@ class BlogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Blog
-        fields = ('title', 'slug', 'description', 'created_at', 'updated_at', 'count_of_posts', 'count_of_commentaries', 'owner', 'authors')
+        fields = ('id', 'title', 'slug', 'description', 'created_at', 'updated_at', 'count_of_posts', 'count_of_commentaries', 'owner', 'authors')
 
 
 class CreateBlogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Blog
-        fields = ('title', 'slug', 'description', 'authors')
+        fields = ('title', 'slug', 'description')
 
 
 class UpdateBlogSerializer(serializers.ModelSerializer):
@@ -36,21 +36,8 @@ class UpdateBlogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Blog
-        fields = ('title', 'slug', 'description', 'created_at', 'updated_at', 'owner', 'count_of_posts', 'count_of_commentaries', 'authors')
+        fields = ('title', 'slug', 'description', 'owner', 'count_of_posts', 'count_of_commentaries', 'authors')
         read_only_fields = ('slug', 'created_at', 'updated_at', 'count_of_posts', 'owner', 'count_of_commentaries')
-
-    def update(self, instance, validated_data):
-        authors_data = validated_data.pop('username')
-        instance.title = validated_data.get('title', instance.title)
-        instance.save()
-
-        # Обновляем Many-to-Many поле
-        instance.authors.clear()
-        for author_data in authors_data:
-            author, created = UserProfile.objects.get_or_create(username=author_data['username'])
-            instance.authors.add(author)
-
-        return instance
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -63,6 +50,19 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         depth = 1
         fields = ('title', 'author', 'body', 'is_published', 'created_at', 'likes', 'views', 'post_id', 'blog', 'tags', 'liked_users')
+        read_only_fields = ('slug', 'created_at', 'updated_at', 'count_of_posts', 'count_of_commentaries')
+
+
+class PostSerializer(serializers.ModelSerializer):
+    blog = BlogSerializer()
+    author = serializers.CharField()
+    liked_users = UserSerializer(many=True)
+    isLiked = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = Post
+        depth = 1
+        fields = ('title', 'author', 'body', 'isLiked', 'is_published', 'created_at', 'likes', 'views', 'post_id', 'blog', 'tags', 'liked_users')
         read_only_fields = ('slug', 'created_at', 'updated_at', 'count_of_posts', 'count_of_commentaries')
 
 
@@ -107,6 +107,29 @@ class SubscriptionList(serializers.ModelSerializer):
 
 
 class InviteUserSerializer(serializers.ModelSerializer):
+    addressee = serializers.CharField()
+    blog = serializers.CharField()
     class Meta:
         model = Invite
-        fields = ['author', 'description', 'created_at', 'addressee']
+        fields = ['admin', 'description', 'addressee', 'blog']
+
+class InviteListUserSerializer(serializers.ModelSerializer):
+    blog = BlogSerializer()
+    admin = serializers.CharField()
+    addressee = serializers.CharField()
+    class Meta:
+        model = Invite
+        fields = ['pk', 'admin', 'description', 'status', 'created_at', 'addressee', 'blog']
+
+class IsBlogOwnerSerializer(serializers.ModelSerializer):
+    value = serializers.CharField(source='slug')
+    id = serializers.CharField(source='pk')
+
+    class Meta:
+        model = Blog
+        fields = ('id', 'value')
+
+class IsBlogAvailableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Blog
+        fields = ['slug',]
