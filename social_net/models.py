@@ -4,6 +4,7 @@ from authentication.models import UserProfile
 
 
 class Blog(models.Model):
+    avatar = models.ImageField(default='icy.jpg', upload_to='blog_avatars/')
     title = models.CharField('Заголовок', max_length=255)
     description = models.TextField('Тематика')
     slug = models.CharField(max_length=255, unique=True)
@@ -37,9 +38,10 @@ class Post(models.Model):
     views = models.IntegerField('Счётчик просмотров', default=0)
     blog = models.ForeignKey(Blog, to_field='slug', related_name='posts', on_delete=models.CASCADE)
     tags = models.TextField('Тэги', null=True)
+    images = models.ImageField(default='ax.jpg', upload_to='post_images/')
 
     def __str__(self):
-        return self.title
+        return f"images{self.id}"
 
     def save(self, *args, **kwargs):
         if self.is_published:

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,6 +43,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'authentication.apps.AuthenticationConfig',
     'social_net.apps.SocialNetConfig',
+    'corsheaders'
 ]
 
 AUTH_USER_MODEL = "authentication.UserProfile"
@@ -68,6 +70,15 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'mediasoft_django_hard.urls'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOWED_ORIGINS = [
+       "http://localhost:3001",
+]
 
 TEMPLATES = [
     {
@@ -117,6 +128,8 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+
 
 
 # Internationalization
