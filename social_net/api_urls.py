@@ -1,7 +1,7 @@
 from django.urls import path
 from .viewsets import BlogList, BlogPage, PostList, MyPosts, BlogPosts, PostPage, CommentaryPage, BlogSubscribe, \
     SubscriptionListViewSet, LikeViewSet, InvitationView, InviteReactView, InviteListView, LeaveBlogView, KickUserView, \
-    IsBlogOwner, IsSlugAvailable, InviteGetUsers, Subscriptions, UserProfileView, ChangeUserProfileView, PostSearchView, BlogCommentsView, BlogPublicationsView
+    IsBlogOwner, IsSlugAvailable, InviteGetUsers, Subscriptions, UserProfileView, ChangeUserProfileView, PostSearchView, BlogCommentsView, BlogPublicationsView, PostCommentReplyList
 
 blog_list = BlogList.as_view({'get': 'list'})
 blog_page = BlogPage.as_view({'put': 'update', 'get': 'retrieve', 'delete': 'destroy'})
@@ -44,6 +44,7 @@ is_slug_available = IsSlugAvailable.as_view({'get': 'is_slug_available'})
 search = PostSearchView.as_view({'get': 'list'})
 
 blog_publications = BlogPublicationsView.as_view({'get': 'list'})
+post_comment_reply_list = PostCommentReplyList.as_view({'get': 'list'})
 
 urlpatterns = [
     path('blog/list/', blog_list, name='blog_list'),
@@ -72,6 +73,7 @@ urlpatterns = [
     path('blog/<slug:slug>/post/<int:post_id>/comment/create/', create_commentary, name='create_commentary'),
     path('blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/', commentary, name='commentary'),
     path('blog/<slug:slug>/post/<int:post_id>/comments/', blog_comments, name='blog_comments'),
+    path('blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/replies/', post_comment_reply_list, name='post_comment_reply_list'),
     path('blog/<slug:slug>/publications/', blog_publications, name='blog_publications'),
 
     path('invite/create/', invite, name='invite'),

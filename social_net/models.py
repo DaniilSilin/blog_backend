@@ -2,10 +2,13 @@ import datetime
 from django.db import models
 from authentication.models import UserProfile
 
-
 class Blog(models.Model):
     avatar = models.ImageField(default='icy.jpg', upload_to='blog_avatars/')
+    avatar_small = models.ImageField(default='icy_small.png', upload_to='blog_avatars_small/')
     title = models.CharField('Заголовок', max_length=255)
+    email = models.CharField('Email', max_length=255, blank=True)
+    phone_number = models.CharField('Номер телефона', max_length=255, blank=True)
+    site_link = models.CharField('Cсылка на свой сайт', max_length=255, blank=True)
     description = models.TextField('Тематика')
     slug = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
@@ -14,6 +17,12 @@ class Blog(models.Model):
     count_of_posts = models.PositiveIntegerField('Кол-во постов блога', default=0)
     count_of_commentaries = models.PositiveIntegerField('Кол-во комментариев блога', default=0)
     authors = models.ManyToManyField(UserProfile, related_name='blog_list', blank=True)
+    vk_link = models.CharField('Ссылка на ВК', max_length=255, blank=True)
+    dzen_link = models.CharField('Ссылка на Дзен', max_length=255, blank=True)
+    ok_link = models.CharField('Ссылка на ОК', max_length=255, blank=True)
+    youtube_link = models.CharField('Ссылка на YouTube', max_length=255, blank=True)
+    telegram_link = models.CharField('Ссылка на Telegram', max_length=255, blank=True)
+
 
     def __str__(self):
         return self.slug
@@ -56,9 +65,13 @@ class Commentary(models.Model):
     author = models.ForeignKey(UserProfile, related_name='commentaries', on_delete=models.CASCADE)
     body = models.TextField('Тело комментария')
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, related_name='comment', on_delete=models.CASCADE)
     comment_id = models.PositiveIntegerField('ID комментария', null=True)
-    # reply_to = models.ForeignKey('Commentary', null=True, on_delete=models.CASCADE, related_name='replies')
+    likes = models.PositiveIntegerField('Лайки', default=0)
+    liked_users = models.ManyToManyField(UserProfile, related_name='liked_commentaries', blank=True)
+    dislikes = models.PositiveIntegerField('Дизлайки', default=0)
+    disliked_users = models.ManyToManyField(UserProfile, related_name='disliked_commentaries', blank=True)
+    reply_to = models.ForeignKey('Commentary', null=True, on_delete=models.CASCADE, related_name='replies')
 
     def __str__(self):
         return self.body

@@ -9,7 +9,7 @@ class AdminPosts(admin.ModelAdmin):
 
 class AdminBlog(admin.ModelAdmin):
     model = Blog
-    list_display = ('title', 'description', 'created_at', 'updated_at')
+    list_display = ('title', 'slug', 'description', 'created_at', 'updated_at')
 
 
 class AdminCommentary(admin.ModelAdmin):
