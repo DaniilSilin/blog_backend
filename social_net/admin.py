@@ -14,7 +14,7 @@ class AdminBlog(admin.ModelAdmin):
 
 class AdminCommentary(admin.ModelAdmin):
     model = Commentary
-    list_display = ('author', 'created_at', 'body', 'comment_id', 'post')
+    list_display = ('id', 'author', 'created_at', 'body', 'comment_id', 'post')
 
 
 class AdminInvite(admin.ModelAdmin):

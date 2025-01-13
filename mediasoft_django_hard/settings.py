@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'authentication.apps.AuthenticationConfig',
     'social_net.apps.SocialNetConfig',
-    'corsheaders'
+    'corsheaders',
+    'channels'
 ]
 
 AUTH_USER_MODEL = "authentication.UserProfile"
@@ -56,6 +57,15 @@ REST_FRAMEWORK = {
     #     'rest_framework.permissions.IsAuthenticated',
     # ],
 
+}
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
 }
 
 MIDDLEWARE = [
@@ -98,7 +108,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'mediasoft_django_hard.wsgi.application'
-
+ASGI_APPLICATION = 'mediasoft_django_hard.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases

@@ -11,7 +11,7 @@ class TagSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ('id', 'username', 'avatar')
+        fields = ('id', 'username', 'avatar', 'avatar_small')
 
 class UserProfileSerializer(serializers.ModelSerializer):
     is_request_user = serializers.BooleanField(read_only=True)
@@ -20,25 +20,27 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = '__all__'
 
+
 class BlogSerializer(serializers.ModelSerializer):
-    owner = serializers.CharField()
+    owner = UserSerializer()
     authors = UserSerializer(many=True)
     # subscribers = UserSerializer(many=True)
     subscriberList = serializers.IntegerField(read_only=True)
     isSubscribed = serializers.BooleanField(read_only=True)
+    isInBookmark = serializers.BooleanField(read_only=True)
+    views = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Blog
-        fields = ('id', 'isSubscribed', 'title', 'subscriberList', 'slug', 'description', 'created_at', 'updated_at', 'count_of_posts',
-                  'count_of_commentaries', 'owner', 'authors', 'avatar', 'avatar_small', 'email', 'phone_number', 'site_link', 'vk_link', 'dzen_link')
-        # fields = ('id', 'title', 'subscribers', 'slug', 'description', 'created_at', 'updated_at', 'count_of_posts', 'count_of_commentaries', 'owner', 'authors', 'avatar')
+        fields = ('id', 'isSubscribed', 'authors', 'title', 'subscriberList', 'slug', 'description', 'created_at', 'updated_at', 'count_of_posts', 'isInBookmark', 'isSubscribed',
+                  'count_of_commentaries', 'owner', 'avatar', 'avatar_small', 'email', 'phone_number', 'site_link', 'vk_link', 'dzen_link', 'pinned_post', 'views', 'banner')
 
 
 class CreateBlogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Blog
-        fields = ('title', 'slug', 'description', 'avatar')
+        fields = ('title', 'slug', 'description', 'avatar', 'avatar_small',)
 
 
 class UpdateBlogSerializer(serializers.ModelSerializer):
@@ -69,16 +71,24 @@ class PostSerializer(serializers.ModelSerializer):
     blog = BlogSerializer()
     author = UserSerializer()
     isLiked = serializers.BooleanField(read_only=True)
-    liked_users = UserSerializer(many=True)
     likedUsersCount = serializers.IntegerField(read_only=True)
     commentCount = serializers.IntegerField(read_only=True)
     subscribers = serializers.IntegerField(read_only=True)
     isSubscribed = serializers.BooleanField(read_only=True)
+    isInBookmark = serializers.BooleanField(read_only=True)
+    comments = serializers.IntegerField(read_only=True)
+    liked_users = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
-        fields = ('id', 'title', 'author', 'body', 'is_published', 'created_at', 'likes', 'views', 'post_id', 'blog', 'tags', 'liked_users', 'isLiked', 'likedUsersCount', 'commentCount', 'subscribers', 'isSubscribed')
+        fields = ('id', 'title', 'author', 'body', 'is_published', 'created_at', 'likes', 'views', 'post_id', 'blog',
+                  'tags', 'liked_users', 'pinned_comment', 'isLiked', 'likedUsersCount', 'commentCount', 'subscribers',
+                  'isSubscribed', 'isInBookmark', 'comments')
         read_only_fields = ('slug', 'created_at', 'updated_at', 'count_of_posts', 'count_of_commentaries')
+
+    def get_liked_users(self, obj):
+        users = obj.liked_users.all()[:2]
+        return UserSerializer(users, many=True).data
 
 
 class CreatePostSerializer(serializers.ModelSerializer):
@@ -99,30 +109,34 @@ class UpdatePostSerializer(serializers.ModelSerializer):
 
 
 class CreateCommentarySerializer(serializers.ModelSerializer):
-    reply_to_1 = serializers.IntegerField(required=False)
+    reply_to = serializers.IntegerField(required=False, default=None)
 
     class Meta:
         model = Commentary
-        fields = ('body', 'author', 'created_at', 'reply_to_1', 'comment_id')
+        fields = ('body', 'author', 'created_at', 'reply_to', 'comment_id')
         read_only_fields = ('author', 'created_at')
 
 
 class PostCommentaryListSerializer(serializers.ModelSerializer):
     author = UserSerializer()
-    # replies = serializers.SerializerMethodField()
-    # replies_count = serializers.SerializerMethodField()
+    count_of_replies = serializers.SerializerMethodField()
+    # reply_to = serializers.SerializerMethodField()
+    isLikedByPostAuthor = serializers.BooleanField()
+    has_author_reply = serializers.BooleanField()
 
     class Meta:
         model = Commentary
-        fields = ('id', 'comment_id', 'body', 'author', 'created_at', 'likes')
+        fields = ('comment_id', 'body', 'author', 'created_at', 'likes', 'dislikes', 'is_edited', 'reply_to', 'count_of_replies',
+                  'isLikedByPostAuthor',
+                  'has_author_reply'
+        )
 
-    # def get_replies_1(self, obj):
-    #     replies = obj.replies.all()
-    #     return PostCommentaryListSerializer(replies, many=True).data
-    #
-    # def get_replies(self, obj):
-    #     replies_count = obj.replies.count()
-    #     return PostCommentaryListSerializer(replies_count, many=False).data
+    def get_count_of_replies(self, obj):
+        replies = obj.replies.count()
+        return replies
+
+    # def get_reply_to(self, obj):
+    #     return obj.reply_to
 
 
 class SubscriptionList(serializers.ModelSerializer):
@@ -136,6 +150,7 @@ class SubscriptionList(serializers.ModelSerializer):
 class InviteUserSerializer(serializers.ModelSerializer):
     addressee = serializers.CharField()
     blog = serializers.CharField()
+
     class Meta:
         model = Invite
         fields = ['admin', 'description', 'addressee', 'blog']
@@ -166,3 +181,26 @@ class InviteGetUsersSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = ('id', 'username', 'email', 'avatar')
+
+
+class BookmarkListSerializer(serializers.ModelSerializer):
+    subscriptions = BlogSerializer(many=True)
+
+    class Meta:
+        model = UserProfile
+        fields = ('subscriptions',)
+
+
+class BookmarkSerializer(serializers.ModelSerializer):
+    subscriptions = BlogSerializer(many=True)
+
+    class Meta:
+        model = UserProfile
+        fields = ('subscriptions',)
+
+
+class ChangeAvatarSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = UserProfile
+        fields = ('avatar', 'avatar_small', 'username',)

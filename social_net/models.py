@@ -2,6 +2,7 @@ import datetime
 from django.db import models
 from authentication.models import UserProfile
 
+
 class Blog(models.Model):
     avatar = models.ImageField(default='icy.jpg', upload_to='blog_avatars/')
     avatar_small = models.ImageField(default='icy_small.png', upload_to='blog_avatars_small/')
@@ -10,6 +11,7 @@ class Blog(models.Model):
     phone_number = models.CharField('Номер телефона', max_length=255, blank=True)
     site_link = models.CharField('Cсылка на свой сайт', max_length=255, blank=True)
     description = models.TextField('Тематика')
+    pinned_post = models.ForeignKey('Post', related_name='pinned_blogs', blank=True, null=True, on_delete=models.CASCADE)
     slug = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
     updated_at = models.DateTimeField('Дата последнего обновления', auto_now_add=True)
@@ -22,7 +24,8 @@ class Blog(models.Model):
     ok_link = models.CharField('Ссылка на ОК', max_length=255, blank=True)
     youtube_link = models.CharField('Ссылка на YouTube', max_length=255, blank=True)
     telegram_link = models.CharField('Ссылка на Telegram', max_length=255, blank=True)
-
+    banner = models.ImageField(default='banner.jpg', upload_to='blog_banners/')
+    # user_map = models.TextField()
 
     def __str__(self):
         return self.slug
@@ -48,6 +51,8 @@ class Post(models.Model):
     blog = models.ForeignKey(Blog, to_field='slug', related_name='posts', on_delete=models.CASCADE)
     tags = models.TextField('Тэги', null=True)
     images = models.ImageField(default='ax.jpg', upload_to='post_images/')
+    pinned_comment = models.ForeignKey('Commentary', related_name='pinned_comment', blank=True, null=True, on_delete=models.CASCADE)
+    comments_allowed = models.BooleanField('Разрешены ли комментарии', default=True)
 
     def __str__(self):
         return f"images{self.id}"
@@ -71,10 +76,11 @@ class Commentary(models.Model):
     liked_users = models.ManyToManyField(UserProfile, related_name='liked_commentaries', blank=True)
     dislikes = models.PositiveIntegerField('Дизлайки', default=0)
     disliked_users = models.ManyToManyField(UserProfile, related_name='disliked_commentaries', blank=True)
-    reply_to = models.ForeignKey('Commentary', null=True, on_delete=models.CASCADE, related_name='replies')
+    reply_to = models.ForeignKey('Commentary', on_delete=models.CASCADE, related_name='replies', blank=True, null=True)
+    is_edited = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.body
+        return str(self.comment_id)
 
 
 class Invite(models.Model):

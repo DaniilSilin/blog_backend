@@ -49,7 +49,11 @@ class RegisterView(viewsets.ModelViewSet):
         user.set_password(password)
         user.save()
 
-        return Response(status=status.HTTP_200_OK)
+        user = authenticate(username=request.data['username'], password=request.data['password'])
+
+        if user:
+            token, created = Token.objects.get_or_create(user=user)
+        return Response({'token': token.key}, status=status.HTTP_200_OK)
 
 
 class LogoutView(viewsets.ModelViewSet):
@@ -60,6 +64,7 @@ class LogoutView(viewsets.ModelViewSet):
         logout(request)
         return Response(status=status.HTTP_200_OK)
 
+
 class UserDataView(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = (permissions.AllowAny,)
@@ -67,3 +72,14 @@ class UserDataView(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
 
+
+class IsUsernameAvailable(viewsets.ModelViewSet):
+    queryset = UserProfile.objects.all()
+    permission_classes = (permissions.AllowAny,)
+
+    def is_username_available(self, request, username):
+        username_exists = self.queryset.filter(username=username).exists()
+        if username_exists:
+            return Response('123', status=status.HTTP_200_OK)
+        else:
+            return Response('321', status=status.HTTP_200_OK)

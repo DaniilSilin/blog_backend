@@ -1,7 +1,8 @@
 from django.urls import path
-from .viewsets import BlogList, BlogPage, PostList, MyPosts, BlogPosts, PostPage, CommentaryPage, BlogSubscribe, \
-    SubscriptionListViewSet, LikeViewSet, InvitationView, InviteReactView, InviteListView, LeaveBlogView, KickUserView, \
-    IsBlogOwner, IsSlugAvailable, InviteGetUsers, Subscriptions, UserProfileView, ChangeUserProfileView, PostSearchView, BlogCommentsView, BlogPublicationsView, PostCommentReplyList
+from .viewsets import BlogList, BlogPage, PostList, MyPosts, BlogPosts, PostPage, CommentaryPage, BlogSubscribe, BookMarksMyListView, \
+    SubscriptionListViewSet, LikeViewSet, InvitationView, InviteReactView, InviteListView, LeaveBlogView, KickUserView, PinPostViewSet, \
+    IsBlogOwner, IsSlugAvailable, InviteGetUsers, Subscriptions, UserProfileView, ChangeUserProfileView, PostSearchView, BlogCommentsView,\
+    BlogPublicationsView, BookmarkView, PinCommentViewSet, LikedUserList, ChangeAvatarView
 
 blog_list = BlogList.as_view({'get': 'list'})
 blog_page = BlogPage.as_view({'put': 'update', 'get': 'retrieve', 'delete': 'destroy'})
@@ -27,7 +28,9 @@ post_create = PostPage.as_view({'post': 'create'})
 
 create_commentary = CommentaryPage.as_view({'post': 'create'})
 commentary = CommentaryPage.as_view({'get': 'retrieve', 'delete': 'destroy', 'put': 'update'})
-blog_comments = BlogCommentsView.as_view({'get': 'list'})
+post_comment_list = BlogCommentsView.as_view({'get': 'list'})
+pin_post = PinPostViewSet.as_view({'post': 'pin_post'})
+pin_comment = PinCommentViewSet.as_view({'post': 'pin_comment'})
 
 invite = InvitationView.as_view({'post': 'send_invite'})
 invite_list = InviteListView.as_view({'get': 'list'})
@@ -44,7 +47,14 @@ is_slug_available = IsSlugAvailable.as_view({'get': 'is_slug_available'})
 search = PostSearchView.as_view({'get': 'list'})
 
 blog_publications = BlogPublicationsView.as_view({'get': 'list'})
-post_comment_reply_list = PostCommentReplyList.as_view({'get': 'list'})
+
+my_bookmarks = BookMarksMyListView.as_view({'get': 'list'})
+add_bookmark = BookmarkView.as_view({'post': 'add_bookmark'})
+remove_bookmark = BookmarkView.as_view({'post': 'remove_bookmark'})
+
+liked_user_list = LikedUserList.as_view({'get': 'list'})
+
+change_avatar = ChangeAvatarView.as_view({'put': 'update'})
 
 urlpatterns = [
     path('blog/list/', blog_list, name='blog_list'),
@@ -54,6 +64,7 @@ urlpatterns = [
     # path('blog/${slug}/authors/', blog_authors, name='blog_authors'),
     path('profile/<slug:username>/', profile, name='profile'),
     path('profile/<slug:username>/change/', change_profile, name='change_profile'),
+    path('profile/<slug:username>/change/avatar/', change_avatar, name='change_avatar'),
     path('<slug:username>/subscriptions/', user_subscriptions, name='user_subscriptions'),
 
     path('subscriptions/', subscriptions, name='subscriptions'),
@@ -69,11 +80,12 @@ urlpatterns = [
 
     path('blog/<slug:slug>/post/create/', post_create, name='create_post'),
     path('blog/<slug:slug>/post/<int:post_id>/', post_page, name='post_page'),
+    path('blog/<slug:slug>/post/<int:post_id>/pin_post/', pin_post, name='pin_post'),
 
     path('blog/<slug:slug>/post/<int:post_id>/comment/create/', create_commentary, name='create_commentary'),
     path('blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/', commentary, name='commentary'),
-    path('blog/<slug:slug>/post/<int:post_id>/comments/', blog_comments, name='blog_comments'),
-    path('blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/replies/', post_comment_reply_list, name='post_comment_reply_list'),
+    path('blog/<slug:slug>/post/<int:post_id>/comment/list/', post_comment_list, name='post_comment_list'),
+    path('blog/<slug:slug>/post/<int:post_id>/liked_user_list/', liked_user_list, name='liked_user_list'),
     path('blog/<slug:slug>/publications/', blog_publications, name='blog_publications'),
 
     path('invite/create/', invite, name='invite'),
@@ -88,5 +100,9 @@ urlpatterns = [
     path('blog_owner/list/', is_blog_owner, name='is_blog_owner'),
     path('blog/<slug:slug>/available/', is_slug_available, name='is_slug_available'),
 
-    path('posts/search/', search, name='search'),
+    path('posts/search/<str:hashtag>/', search, name='search'),
+
+    path('bookmarks/my/', my_bookmarks, name='my_bookmarks'),
+    path('bookmark/blog/<slug:slug>/post/<int:post_id>/add/', add_bookmark, name='add_bookmark'),
+    path('bookmark/blog/<slug:slug>/post/<int:post_id>/remove/', remove_bookmark, name='remove_bookmark')
 ]
