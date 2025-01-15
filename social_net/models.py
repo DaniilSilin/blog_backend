@@ -78,6 +78,7 @@ class Commentary(models.Model):
     disliked_users = models.ManyToManyField(UserProfile, related_name='disliked_commentaries', blank=True)
     reply_to = models.ForeignKey('Commentary', on_delete=models.CASCADE, related_name='replies', blank=True, null=True)
     is_edited = models.BooleanField(default=False)
+    liked_by_author = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.comment_id)
