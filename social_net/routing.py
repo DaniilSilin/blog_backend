@@ -1,7 +1,7 @@
 from django.urls import path
 
-from .consumers import WSConsumer
+from .consumers import UserConsumer
 
 ws_urlpatterns = [
-    path('ws/some-url/', WSConsumer.as_asgi())
+    path('ws/some-url/', UserConsumer.as_asgi())
 ]

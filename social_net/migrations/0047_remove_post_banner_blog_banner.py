@@ -17,6 +17,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='blog',
             name='banner',
-            field=models.ImageField(default='banner.jpg', upload_to='blog_banners/'),
+            field=models.ImageField(default='banner.jpg', upload_to='blog/'),
         ),
     ]

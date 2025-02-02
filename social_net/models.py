@@ -2,9 +2,8 @@ import datetime
 from django.db import models
 from authentication.models import UserProfile
 
-
 class Blog(models.Model):
-    avatar = models.ImageField(default='icy.jpg', upload_to='blog_avatars/')
+    avatar = models.ImageField(default='icy.jpg', upload_to='blog/')
     avatar_small = models.ImageField(default='icy_small.png', upload_to='blog_avatars_small/')
     title = models.CharField('Заголовок', max_length=255)
     email = models.CharField('Email', max_length=255, blank=True)
@@ -24,8 +23,8 @@ class Blog(models.Model):
     ok_link = models.CharField('Ссылка на ОК', max_length=255, blank=True)
     youtube_link = models.CharField('Ссылка на YouTube', max_length=255, blank=True)
     telegram_link = models.CharField('Ссылка на Telegram', max_length=255, blank=True)
-    banner = models.ImageField(default='banner.jpg', upload_to='blog_banners/')
-    # user_map = models.TextField()
+    banner = models.ImageField(default='banner.jpg', upload_to='blog/')
+    map = models.TextField('Ссылка на карту')
 
     def __str__(self):
         return self.slug
@@ -47,15 +46,17 @@ class Post(models.Model):
     created_at = models.DateTimeField('Дата публикации', auto_now_add=True)
     likes = models.IntegerField('Счётчик оценок', default=0)
     liked_users = models.ManyToManyField('authentication.UserProfile', related_name='alex', blank=True)
+    dislikes = models.IntegerField('Счётчик дизлайков', default=0)
+    disliked_users = models.ManyToManyField('authentication.UserProfile', related_name='disliked', blank=True)
     views = models.IntegerField('Счётчик просмотров', default=0)
     blog = models.ForeignKey(Blog, to_field='slug', related_name='posts', on_delete=models.CASCADE)
     tags = models.TextField('Тэги', null=True)
-    images = models.ImageField(default='ax.jpg', upload_to='post_images/')
     pinned_comment = models.ForeignKey('Commentary', related_name='pinned_comment', blank=True, null=True, on_delete=models.CASCADE)
     comments_allowed = models.BooleanField('Разрешены ли комментарии', default=True)
+    map = models.TextField('Ссылка на карту', blank=True)
 
     def __str__(self):
-        return f"images{self.id}"
+        return str(self.title)
 
     def save(self, *args, **kwargs):
         if self.is_published:
@@ -90,7 +91,7 @@ class Invite(models.Model):
     description = models.TextField('Описание')
     addressee = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     status = models.BooleanField('Статус приглашения', null=True)
-    blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
+    blog = models.ForeignKey(Blog, on_delete=models.CASCADE, related_name='invites')
 
     def __str__(self):
         return str(self.admin)

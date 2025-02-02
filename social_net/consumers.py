@@ -14,21 +14,6 @@ from djangochannelsrestframework.mixins import (
     DeleteModelMixin,
 )
 
-
-class WSConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        await self.accept()
-
-    async def disconnect(self, close_code):
-        pass
-
-    async def receive(self, text_data):
-        data = json.loads(text_data)
-        await self.send(text_data=json.dumps({
-            'message': 'Hello from WebSocket!'
-        }))
-
-
 class UserConsumer(
         ListModelMixin,
         RetrieveModelMixin,
@@ -39,5 +24,5 @@ class UserConsumer(
         GenericAsyncAPIConsumer,
 ):
 
-    queryset = Commentary.objects.all()
-    serializer_class = PostCommentaryListSerializer
+    queryset = Blog.objects.all()
+    serializer_class = BlogSerializer
