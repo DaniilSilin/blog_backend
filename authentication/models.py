@@ -12,10 +12,10 @@ class UserProfile(AbstractUser):
     is_profile_private = models.BooleanField(default=False)
     last_activity = models.DateTimeField(auto_now=True)
     age = models.PositiveIntegerField('Возраст', null=True)
-    avatar = models.ImageField(default='default_images/original/avatar.jpg', upload_to='avatars/profile/original/')
-    avatar_small = models.ImageField(default='default_images/original/avatar.jpg', upload_to='avatars/profile/small/')
-    banner = models.ImageField(default='default_images/original/banner.jpg', upload_to='banners/profile/original/')
-    banner_small = models.ImageField(default='default_images/small/banner.jpg', upload_to='banners/profile/small/')
+    avatar = models.ImageField(default='default/original/avatar.jpg', upload_to='avatars/profile/original/')
+    avatar_small = models.ImageField(default='default/original/avatar.jpg', upload_to='avatars/profile/small/')
+    banner = models.ImageField(default='default/original/banner.jpg', upload_to='banners/profile/original/')
+    banner_small = models.ImageField(default='default/small/banner.jpg', upload_to='banners/profile/small/')
 
 
     def __str__(self):

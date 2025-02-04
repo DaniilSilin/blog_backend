@@ -22,11 +22,12 @@ class BlogSerializer(serializers.ModelSerializer):
     isSubscribed = serializers.BooleanField(read_only=True)
     isInBookmark = serializers.BooleanField(read_only=True)
     views = serializers.IntegerField(read_only=True)
+    # pinned_post = PostSerializer()
 
     class Meta:
         model = Blog
         fields = ('id', 'isSubscribed', 'owner', 'authors', 'title', 'subscriberList', 'slug', 'description', 'created_at', 'updated_at', 'count_of_posts', 'isInBookmark', 'isSubscribed',
-                  'count_of_commentaries', 'owner', 'avatar', 'avatar_small', 'email', 'phone_number', 'site_link', 'vk_link', 'dzen_link', 'pinned_post', 'views', 'banner')
+                  'count_of_commentaries', 'owner', 'avatar', 'avatar_small', 'banner', 'banner_small', 'email', 'phone_number', 'site_link', 'vk_link', 'dzen_link', 'pinned_post', 'views')
 
 
 class CreateBlogSerializer(serializers.ModelSerializer):
@@ -38,12 +39,11 @@ class CreateBlogSerializer(serializers.ModelSerializer):
 
 
 class UpdateBlogSerializer(serializers.ModelSerializer):
-    owner = serializers.CharField(source='owner.username', read_only=True)
     authors = UserSerializer(many=True)
 
     class Meta:
         model = Blog
-        fields = ('title', 'slug', 'avatar', 'avatar_small', 'description', 'owner', 'count_of_posts', 'count_of_commentaries', 'authors')
+        fields = ('title', 'slug', 'avatar', 'avatar_small', 'avatar', 'banner', 'banner_small', 'description', 'owner', 'count_of_posts', 'count_of_commentaries', 'authors')
         read_only_fields = ('slug', 'created_at', 'updated_at', 'count_of_posts', 'owner', 'count_of_commentaries')
 
 
@@ -124,18 +124,14 @@ class PostCommentaryListSerializer(serializers.ModelSerializer):
     author = UserSerializer()
     count_of_replies = serializers.SerializerMethodField()
     # reply_to = serializers.SerializerMethodField()
-    has_author_reply = serializers.BooleanField()
 
     class Meta:
         model = Commentary
-        fields = ('comment_id', 'body', 'author', 'created_at', 'likes', 'dislikes', 'is_edited', 'reply_to', 'count_of_replies', 'has_author_reply')
+        fields = ('comment_id', 'body', 'author', 'created_at', 'likes', 'dislikes', 'is_edited', 'reply_to', 'count_of_replies', 'liked_by_author')
 
     def get_count_of_replies(self, obj):
         replies = obj.replies.count()
         return replies
-
-    # def get_reply_to(self, obj):
-    #     return obj.reply_to
 
 
 class SubscriptionList(serializers.ModelSerializer):

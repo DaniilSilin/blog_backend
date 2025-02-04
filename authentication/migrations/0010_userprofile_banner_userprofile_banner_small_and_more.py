@@ -13,21 +13,21 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='userprofile',
             name='banner',
-            field=models.ImageField(default='default_images/original/banner.jpg', upload_to='banners/profile/original/'),
+            field=models.ImageField(default='default/original/banner.jpg', upload_to='banners/profile/original/'),
         ),
         migrations.AddField(
             model_name='userprofile',
             name='banner_small',
-            field=models.ImageField(default='default_images/small/banner.jpg', upload_to='banners/profile/small/'),
+            field=models.ImageField(default='default/small/banner.jpg', upload_to='banners/profile/small/'),
         ),
         migrations.AlterField(
             model_name='userprofile',
             name='avatar',
-            field=models.ImageField(default='default_images/original/avatar.jpg', upload_to='avatars/profile/original/'),
+            field=models.ImageField(default='default/original/avatar.jpg', upload_to='avatars/profile/original/'),
         ),
         migrations.AlterField(
             model_name='userprofile',
             name='avatar_small',
-            field=models.ImageField(default='default_images/original/avatar.jpg', upload_to='avatars/profile/small/'),
+            field=models.ImageField(default='default/original/avatar.jpg', upload_to='avatars/profile/small/'),
         ),
     ]

@@ -3,8 +3,10 @@ from django.db import models
 from authentication.models import UserProfile
 
 class Blog(models.Model):
-    avatar = models.ImageField(default='icy.jpg', upload_to='blog/')
-    avatar_small = models.ImageField(default='icy_small.png', upload_to='blog_avatars_small/')
+    avatar = models.ImageField(default='default/original/avatar.jpg', upload_to='blog/avatars/original/')
+    avatar_small = models.ImageField(default='default/small/avatar.jpg', upload_to='blog/avatars/small/')
+    banner = models.ImageField(default='default/original/banner.jpg', upload_to='blog/banners/original/')
+    banner_small = models.ImageField(default='default/small/banner.jpg', upload_to='blog/banners/small/')
     title = models.CharField('Заголовок', max_length=255)
     email = models.CharField('Email', max_length=255, blank=True)
     phone_number = models.CharField('Номер телефона', max_length=255, blank=True)
@@ -23,7 +25,6 @@ class Blog(models.Model):
     ok_link = models.CharField('Ссылка на ОК', max_length=255, blank=True)
     youtube_link = models.CharField('Ссылка на YouTube', max_length=255, blank=True)
     telegram_link = models.CharField('Ссылка на Telegram', max_length=255, blank=True)
-    banner = models.ImageField(default='banner.jpg', upload_to='blog/')
     map = models.TextField('Ссылка на карту')
 
     def __str__(self):

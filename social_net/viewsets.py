@@ -161,12 +161,11 @@ class BlogPage(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
-        blog.authors.clear()
         serializer = UpdateBlogSerializer(instance=blog, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         # instance_serializer = BlogSerializer(serializer)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'status': 'successful'}, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         serializer = CreateBlogSerializer(data=request.data)
@@ -386,9 +385,7 @@ class PostPage(viewsets.ModelViewSet):
         )
 
         post.save()
-        serial = PostSerializer(post)
-        print(serial)
-        return Response(status=status.HTTP_201_CREATED)
+        return Response({'status': 'successful'}, status=status.HTTP_201_CREATED)
 
 
 class BlogSubscribe(viewsets.ModelViewSet):
@@ -843,18 +840,6 @@ class PostCommentListView(viewsets.ModelViewSet):
             queryset = queryset.filter(reply_to=model)
         else:
             queryset = queryset.filter(reply_to=None)
-
-        parent_comments = queryset.annotate(
-            has_author_reply=Exists(
-                Commentary.objects.filter(reply_to=70, author__username='admin')
-            )
-        )
-
-        queryset = queryset.annotate(
-            has_author_reply=Exists(
-                parent_comments
-            )
-        )
 
         if queryset is not None:
             paginate_queryset = self.paginate_queryset(queryset)
