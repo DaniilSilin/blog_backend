@@ -316,7 +316,7 @@ class BlogPosts(viewsets.ModelViewSet):
 
 class PostPage(viewsets.ModelViewSet):
     queryset = Post.objects.all()
-    permission_classes = [PostPermissions]
+    permission_classes = [permissions.AllowAny]
 
     def get_serializer_class(self):
         if self.request.method == 'POST' or self.request.method == 'PUT':

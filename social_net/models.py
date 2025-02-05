@@ -3,10 +3,10 @@ from django.db import models
 from authentication.models import UserProfile
 
 class Blog(models.Model):
-    avatar = models.ImageField(default='default/original/avatar.jpg', upload_to='blog/avatars/original/')
-    avatar_small = models.ImageField(default='default/small/avatar.jpg', upload_to='blog/avatars/small/')
-    banner = models.ImageField(default='default/original/banner.jpg', upload_to='blog/banners/original/')
-    banner_small = models.ImageField(default='default/small/banner.jpg', upload_to='blog/banners/small/')
+    avatar = models.ImageField(upload_to='blog/avatars/original/', null=True)
+    avatar_small = models.ImageField(upload_to='blog/avatars/small/', null=True)
+    banner = models.ImageField(upload_to='blog/banners/original/', null=True)
+    banner_small = models.ImageField(upload_to='blog/banners/small/', null=True)
     title = models.CharField('Заголовок', max_length=255)
     email = models.CharField('Email', max_length=255, blank=True)
     phone_number = models.CharField('Номер телефона', max_length=255, blank=True)
