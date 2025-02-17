@@ -11,11 +11,10 @@ class UserProfile(AbstractUser):
     date_of_birth = models.DateField('Дата рождения', null=True)
     is_profile_private = models.BooleanField(default=False)
     last_activity = models.DateTimeField(auto_now=True)
-    avatar = models.ImageField(upload_to='avatars/profile/original/')
-    avatar_small = models.ImageField(upload_to='avatars/profile/small/')
-    banner = models.ImageField(upload_to='banners/profile/original/')
-    banner_small = models.ImageField(upload_to='banners/profile/small/')
-
+    avatar = models.ImageField(upload_to='avatars/profile/original/', null=True, blank=True)
+    avatar_small = models.ImageField(upload_to='avatars/profile/small/', null=True, blank=True)
+    banner = models.ImageField(upload_to='banners/profile/original/', null=True, blank=True)
+    banner_small = models.ImageField(upload_to='banners/profile/small/', null=True, blank=True)
 
     def __str__(self):
         return self.username

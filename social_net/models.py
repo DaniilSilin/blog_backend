@@ -3,15 +3,15 @@ from django.db import models
 from authentication.models import UserProfile
 
 class Blog(models.Model):
-    avatar = models.ImageField(upload_to='blog/avatars/original/', null=True)
-    avatar_small = models.ImageField(upload_to='blog/avatars/small/', null=True)
-    banner = models.ImageField(upload_to='blog/banners/original/', null=True)
-    banner_small = models.ImageField(upload_to='blog/banners/small/', null=True)
+    avatar = models.ImageField(upload_to='blog/avatars/original/', null=True, blank=True)
+    avatar_small = models.ImageField(upload_to='blog/avatars/small/', null=True, blank=True)
+    banner = models.ImageField(upload_to='blog/banners/original/', null=True, blank=True)
+    banner_small = models.ImageField(upload_to='blog/banners/small/', null=True, blank=True)
     title = models.CharField('Заголовок', max_length=255)
     email = models.CharField('Email', max_length=255, blank=True)
     phone_number = models.CharField('Номер телефона', max_length=255, blank=True)
     site_link = models.CharField('Cсылка на свой сайт', max_length=255, blank=True)
-    description = models.TextField('Тематика')
+    description = models.TextField('Тематика', null=True, blank=True)
     pinned_post = models.ForeignKey('Post', related_name='pinned_blogs', blank=True, null=True, on_delete=models.CASCADE)
     slug = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
@@ -96,3 +96,10 @@ class Invite(models.Model):
 
     def __str__(self):
         return str(self.admin)
+
+
+# class Notification(models.Model):
+#     addressee = models.ForeignKey()
+#     author = models.ForeignKey()
+#     created_at = models.DateTimeField()
+#     is_read = models.BooleanField()

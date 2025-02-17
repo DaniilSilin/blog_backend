@@ -1,9 +1,9 @@
 from django.urls import path
-from .viewsets import BlogList, BlogPage, PostList, MyPosts, BlogPosts, PostPage, CommentaryPage, BlogSubscribe, BookMarksMyListView, \
+from .viewsets import BlogList, BlogPage, PostList, MyPosts, BlogPosts, PostPage, CommentaryPage, BlogSubscribe, BookmarksListView, \
     SubscriptionListViewSet, LikeViewSet, InvitationView, InviteReactView, InviteListView, LeaveBlogView, KickUserView, PinPostViewSet, \
-    IsBlogOwner, IsSlugAvailable, InviteGetUsers, Subscriptions, UserProfileView, ChangeUserProfileView, PostSearchView, PostCommentListView,\
+    IsBlogOwner, IsSlugAvailable, InviteGetUsers, UserProfileView, ChangeUserProfileView, PostSearchView, PostCommentListView,\
     BlogPublicationsView, BookmarkView, PinCommentViewSet, LikedUserList, ChangeAvatarView, DeleteAvatarView, BlogEditorPostsView, BlogsWhereUserIsOwner, \
-    BlogsWhereUserIsAuthor, BlogInvitations, BlogComments
+    BlogsWhereUserIsAuthor, BlogInvitationListView, BlogComments, LikedPostListView, SubscriptionListView, SubscriptionMiniList, BlogAuthorList, SetCommentLikeView
 
 blog_list = BlogList.as_view({'get': 'list'})
 blog_page = BlogPage.as_view({'put': 'update', 'get': 'retrieve', 'delete': 'destroy'})
@@ -18,7 +18,6 @@ change_profile = ChangeUserProfileView.as_view({'post': 'update'})
 blog_sub = BlogSubscribe.as_view({'post': 'subscribe'})
 blog_unsub = BlogSubscribe.as_view({'post': 'unsubscribe'})
 user_subscriptions = SubscriptionListViewSet.as_view({'get': 'list'})
-subscriptions = Subscriptions.as_view({'get': 'list'})
 
 add_like = LikeViewSet.as_view({'post': 'add_like'})
 remove_like = LikeViewSet.as_view({'post': 'remove_like'})
@@ -50,7 +49,6 @@ search = PostSearchView.as_view({'get': 'list'})
 
 blog_publications = BlogPublicationsView.as_view({'get': 'list'})
 
-my_bookmarks = BookMarksMyListView.as_view({'get': 'list'})
 add_bookmark = BookmarkView.as_view({'post': 'add_bookmark'})
 remove_bookmark = BookmarkView.as_view({'post': 'remove_bookmark'})
 
@@ -65,12 +63,23 @@ blog_editor_posts = BlogEditorPostsView.as_view({'get': 'list'})
 username_blogs_owner = BlogsWhereUserIsOwner.as_view({'get': 'list'})
 username_blogs_author = BlogsWhereUserIsAuthor.as_view({'get': 'list'})
 
-blog_invitations = BlogInvitations.as_view({'get': 'list'})
+blog_invitations = BlogInvitationListView.as_view({'get': 'list'})
+
+liked_posts = LikedPostListView.as_view({'get': 'list'})
+bookmarked_posts = BookmarksListView.as_view({'get': 'list'})
+subscriptions = SubscriptionListView.as_view({'get': 'list'})
+subscriptions_mini = SubscriptionMiniList.as_view({'get': 'list'})
+
+blog_authors = BlogAuthorList.as_view({'get': 'list'})
+
+set_or_remove_comment_like = SetCommentLikeView.as_view({'post': 'set_or_remove_like'})
+set_or_remove_comment_dislike = SetCommentLikeView.as_view({'post': 'set_or_remove_dislike'})
 
 urlpatterns = [
     path('blog/list/', blog_list, name='blog_list'),
     path('blog/create/', blog_create, name='create_blog'),
     path('blog/<slug:slug>/', blog_page, name='blog_page'),
+    path('blog/<slug:slug>/authors/', blog_authors, name='blog_authors'),
 
     # path('blog/${slug}/authors/', blog_authors, name='blog_authors'),
     path('profile/<slug:username>/', profile, name='profile'),
@@ -80,7 +89,6 @@ urlpatterns = [
 
     path('<slug:username>/subscriptions/', user_subscriptions, name='user_subscriptions'),
 
-    path('subscriptions/', subscriptions, name='subscriptions'),
     path('blog/<slug:slug>/subscribe/', blog_sub, name='blog_subscribe'),
     path('blog/<slug:slug>/unsubscribe/', blog_unsub, name='blog_unsubscribe'),
 
@@ -96,6 +104,8 @@ urlpatterns = [
     path('blog/<slug:slug>/post/<int:post_id>/', post_page, name='post_page'),
     path('blog/<slug:slug>/post/<int:post_id>/pin_post/', pin_post, name='pin_post'),
 
+    path('blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/like/add/', set_or_remove_comment_like, name='add_like'),
+    path('blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/like/remove/', set_or_remove_comment_dislike, name='remove_like'),
     path('blog/<slug:slug>/post/<int:post_id>/comment/create/', create_commentary, name='create_commentary'),
     path('blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/', commentary, name='commentary'),
     path('blog/<slug:slug>/post/<int:post_id>/comment/list/', post_comment_list, name='post_comment_list'),
@@ -106,17 +116,13 @@ urlpatterns = [
     path('invite/list/', invite_list, name='invite_list'),
     path('invite/<int:pk>/accept/', invite_accept, name='accept_invite'),
     path('invite/<int:pk>/reject/', invite_reject, name='reject_invite'),
-    path('invite/blog/<slug:slug>/get_users/<slug:username>/', invite_get_users, name='invite_get_users'),
-
-    path('blog/<slug:slug>/leave/', leave_blog, name='leave_blog'),
-    path('blog/<slug:slug>/kick/<slug:username>/', kick_user, name='kick_user'),
+    path('invite/blog/<slug:slug>/get_users/', invite_get_users, name='invite_get_users'),
 
     path('blog_owner/list/', is_blog_owner, name='is_blog_owner'),
     path('blog/<slug:slug>/available/', is_slug_available, name='is_slug_available'),
 
     path('posts/search/<str:hashtag>/', search, name='search'),
 
-    path('bookmarks/my/', my_bookmarks, name='my_bookmarks'),
     path('bookmark/blog/<slug:slug>/post/<int:post_id>/add/', add_bookmark, name='add_bookmark'),
     path('bookmark/blog/<slug:slug>/post/<int:post_id>/remove/', remove_bookmark, name='remove_bookmark'),
 
@@ -126,4 +132,12 @@ urlpatterns = [
     path('<slug:username>/blogs/author/', username_blogs_author, name='username_blogs_author'),
 
     path('blog/<slug:slug>/comments/', blog_comments, name='blog_comments'),
+
+    path('liked_posts/', liked_posts, name='liked_posts'),
+    path('subscriptions/', subscriptions, name='subscriptions'),
+    path('bookmarked_posts/', bookmarked_posts, name='bookmarked_posts'),
+    path('subscriptions/mini/', subscriptions_mini, name='subscriptions_mini'),
+
+    path('blog/<slug:slug>/leave/', leave_blog, name='leave_blog'),
+    path('blog/<slug:slug>/kick/<slug:username>/', kick_user, name='kick_user'),
 ]

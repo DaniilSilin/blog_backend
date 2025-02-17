@@ -1,3 +1,4 @@
+from django.db.models.functions import Coalesce
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
@@ -14,7 +15,8 @@ from .serializers import (BlogSerializer, CreateBlogSerializer, UpdateBlogSerial
                           UpdatePostSerializer, UserProfileSerializer, BlogCommentListSerializer,
                           InviteUserSerializer, InviteListUserSerializer, IsBlogOwnerSerializer,
                           IsBlogAvailableSerializer, InviteGetUsersSerializer, PostCommentaryListSerializer,
-                          BookmarkListSerializer, BookmarkSerializer, UserSerializer, ChangeAvatarSerializer)
+                          BookmarkListSerializer, BookmarkSerializer, UserSerializer, ChangeAvatarSerializer,
+                          SubscriptionListMiniSerializer, BlogMiniListSerializer)
 
 
 class BlogPermissions(permissions.BasePermission):
@@ -80,10 +82,12 @@ class CommentaryPermissions(permissions.BasePermission):
 class ListSetPagination(PageNumberPagination):
     page_size = 5
 
+class BlogListPagination(PageNumberPagination):
+    page_size = 10
 
 class BlogList(viewsets.ModelViewSet):
     queryset = Blog.objects.all().order_by('-updated_at')
-    serializer_class = BlogSerializer
+    serializer_class = BlogMiniListSerializer
     pagination_class = ListSetPagination
     permission_classes = [permissions.AllowAny]
 
@@ -93,49 +97,48 @@ class BlogList(viewsets.ModelViewSet):
         order_array = []
 
         search = self.request.query_params.get('search', None)
-        order = self.request.query_params.get('order', None)
+        sorting = self.request.query_params.get('sorting', None)
         before = self.request.query_params.get('before', None)
         after = self.request.query_params.get('after', None)
 
         if search:
-            queryset = queryset.filter(Q(title__icontains=search) | Q(description__icontains=search))
+            queryset = queryset.filter(title__icontains=search)
 
         if after:
             query_dict['updated_at__gt'] = after
         if before:
             query_dict['updated_at__lt'] = before
 
-        if order:
-            order_array_split = order.split(',')
-            list_of_order = ['title_asc', 'title_desc', 'date', '-date']
-
-            for order_query in order_array_split:
-                if order_query in list_of_order:
-                    if 'title_asc' in order_array_split:
-                        order_array += ['title']
-                    if 'title_desc' in order_array_split:
-                        order_array += ["-title"]
-                    if 'date' in order_array_split:
-                        order_array += ["updated_at"]
-                    if '-date' in order_array_split:
-                        order_array += ["-updated_at"]
-                else:
-                    return Response(status=status.HTTP_200_OK)
+        if sorting:
+            if sorting == 'date':
+                queryset = queryset.order_by('updated_at')
+            if sorting == '-date':
+                queryset = queryset.order_by('-updated_at')
+            if sorting == 'title_asc':
+                queryset = queryset.order_by('title')
+            if sorting == 'title_desc':
+                queryset = queryset.order_by('-title')
 
         queryset = queryset.filter(**query_dict)
-        if len(order_array):
-            queryset = queryset.order_by(*order_array).distinct()
+
+        is_author_subquery = Blog.authors.through.objects.filter(
+            blog=OuterRef('pk'),
+            userprofile=request.user
+        )
+
         result = queryset.annotate(
             subscriberList=Count('subscribers'),
+            views=Coalesce(Sum('posts__views'), 0),
             isSubscribed=Case(
                 When(subscribers=request.user, then=Value(True)),
                   default=Value(False),
                   output_field=BooleanField(),
-            )
+            ),
+            isBlogAuthor=Exists(is_author_subquery)
         )
-        paginatedResult = self.paginate_queryset(result)
-        if paginatedResult is not None:
-            serializer = BlogSerializer(paginatedResult, many=True)
+        paginated_result = self.paginate_queryset(result)
+        if paginated_result is not None:
+            serializer = BlogMiniListSerializer(paginated_result, many=True)
             result = self.get_paginated_response(serializer.data)
             return Response(result.data, status=status.HTTP_200_OK)
         else:
@@ -187,7 +190,7 @@ class BlogPage(viewsets.ModelViewSet):
         )
 
         blog.save()
-        return Response({'slug': slug}, status=status.HTTP_201_CREATED)
+        return Response(slug, status=status.HTTP_201_CREATED)
 
     def retrieve(self, request, *args, **kwargs):
         try:
@@ -205,7 +208,7 @@ class PostList(viewsets.ModelViewSet):
     queryset = Post.objects.filter(is_published=True).order_by('-created_at')
     serializer_class = PostSerializer
     pagination_class = ListSetPagination
-    permission_classes = [PostPermissions]
+    # permission_classes = [permissions.AllowAny]
 
     def list(self, request, *args, **kwargs):
         queryset = self.queryset
@@ -241,11 +244,16 @@ class PostList(viewsets.ModelViewSet):
                 default=Value(False),
                 output_field=BooleanField()
             ),
+            isBookmarked=Case(
+                When(bookmarks=request.user, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField()
+            ),
             comments=Count('comment'),
         )
         paginatedResult = self.paginate_queryset(result)
         if paginatedResult is not None:
-            serializer = PostSerializer(paginatedResult, many=True)
+            serializer = self.serializer_class(paginatedResult, many=True)
             result = self.get_paginated_response(serializer.data)
             return Response(result.data, status=status.HTTP_200_OK)
         else:
@@ -270,7 +278,7 @@ class MyPosts(viewsets.ModelViewSet):
         )
         paginatedResult = self.paginate_queryset(result)
         if paginatedResult is not None:
-            serializer = PostSerializer(paginatedResult, many=True)
+            serializer = self.serializer_class(paginatedResult, many=True)
             result = self.get_paginated_response(serializer.data)
             return Response(result.data, status=status.HTTP_200_OK)
         else:
@@ -287,11 +295,19 @@ class BlogPosts(viewsets.ModelViewSet):
         queryset = self.queryset
 
         sorting = self.request.query_params.get('sorting', None)
+        search = self.request.query_params.get('search', None)
         if sorting:
             if sorting == 'newest':
                 queryset = queryset.order_by('-created_at')
             if sorting == 'oldest':
                 queryset = queryset.order_by('created_at')
+            if sorting == 'title_asc':
+                queryset = queryset.order_by('title')
+            if sorting == 'title_desc':
+                queryset = queryset.order_by('-title')
+
+        if search:
+            queryset = queryset.filter(title__icontains=search)
 
         queryset = queryset.filter(blog__slug=self.kwargs['slug']).distinct().annotate(
             commentCount=Count('comment'),
@@ -301,15 +317,15 @@ class BlogPosts(viewsets.ModelViewSet):
                 default=Value(False),
                 output_field=BooleanField(),
             ),
-            isInBookmark=Case(
+            isBookmarked=Case(
                 When(bookmarks=request.user, then=Value(True)),
                 default=Value(False),
                 output_field=BooleanField(),
             )
         )
-        paginatedResult = self.paginate_queryset(queryset)
-        if paginatedResult is not None:
-            serializer = PostSerializer(paginatedResult, many=True)
+        paginated_result = self.paginate_queryset(queryset)
+        if paginated_result is not None:
+            serializer = self.serializer_class(paginated_result, many=True)
             result = self.get_paginated_response(serializer.data)
         return Response(result.data, status=status.HTTP_200_OK)
 
@@ -454,7 +470,7 @@ class InvitationView(viewsets.ModelViewSet):
     serializer_class = InviteUserSerializer
 
     def send_invite(self, request):
-        serializer = InviteUserSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         admin = get_object_or_404(UserProfile, pk=serializer.data['admin'])
         description = serializer.data['description']
@@ -523,14 +539,13 @@ class LeaveBlogView(viewsets.ModelViewSet):
 
 
 class KickUserView(viewsets.ModelViewSet):
-    queryset = UserProfile.objects.all()
     permission_classes = [IsAuthenticated]
 
-    def kick_user(self, slug, username):
-        blog = get_object_or_404(Blog, slug=slug)
-        user = get_object_or_404(UserProfile, username=username)
+    def kick_user(self, request, slug, username):
+        blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
+        user = get_object_or_404(UserProfile, username=self.kwargs['username'])
         blog.authors.remove(user)
-        return Response({ "status": "success" }, status=status.HTTP_200_OK)
+        return Response({"status": "success"}, status=status.HTTP_200_OK)
 
 class IsBlogOwner(viewsets.ModelViewSet):
     queryset = Blog.objects.all()
@@ -548,9 +563,9 @@ class IsSlugAvailable(viewsets.ModelViewSet):
     def is_slug_available(self, request, slug):
         blog = self.queryset.filter(slug=slug).exists()
         if blog:
-            return Response({'Этот адрес уже занят'}, status=status.HTTP_200_OK)
+            return Response('Этот адрес уже занят', status=status.HTTP_200_OK)
         else:
-            return Response({'Адрес свободен'}, status=status.HTTP_200_OK)
+            return Response('Адрес свободен', status=status.HTTP_200_OK)
 
 
 class InviteGetUsers(viewsets.ModelViewSet):
@@ -561,37 +576,27 @@ class InviteGetUsers(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         queryset = self.queryset
 
+        query = self.request.query_params.get('query', None)
+
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
         pending_invites = Invite.objects.filter(blog=blog, status=None).values_list('addressee__username', flat=True)
-        print(pending_invites)
+        # current_blog_authors = UserProfile.objects.filter()
+
         queryset = queryset.exclude(Q(username__in=pending_invites))
-        username = self.kwargs['username']
-        if username:
-            userList = queryset.filter(username__icontains=username)[:5]
-            if userList:
-                serializer = self.serializer_class(userList, many=True)
+        if query:
+            user_list = queryset.filter(username__icontains=query)[:5]
+            if user_list:
+                serializer = self.serializer_class(user_list, many=True)
                 return Response(data=serializer.data, status=status.HTTP_200_OK)
             else:
                 return Response({'status': 'unsuccessful'}, status=status.HTTP_404_NOT_FOUND)
         else:
-            userList = queryset.order_by('?')[:5]
-            if userList:
-                serializer = self.serializer_class(userList, many=True)
+            user_list = queryset.order_by('?')[:5]
+            if user_list:
+                serializer = self.serializer_class(user_list, many=True)
                 return Response(data=serializer.data, status=status.HTTP_200_OK)
             else:
                 return Response({'status': 'unsuccessful'}, status=status.HTTP_404_NOT_FOUND)
-
-
-class Subscriptions(viewsets.ModelViewSet):
-    queryset = UserProfile.objects.all()
-    serializer_class = SubscriptionList
-    permission_classes = [IsAuthenticated]
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.queryset.filter()
-        blog = queryset.filter(username=request.user.username)
-        serializer = SubscriptionList(blog, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserProfileView(viewsets.ModelViewSet):
@@ -679,23 +684,13 @@ class BlogPublicationsView(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class BookMarksMyListView(viewsets.ModelViewSet):
-    queryset = UserProfile.objects.all()
-    serializer_class = BookmarkListSerializer
-    pagination_class = ListSetPagination
-    permission_classes = [permissions.IsAuthenticated]
-
-    def list(self, request, *args, **kwargs):
-        pass
-
-
 class BookmarkView(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = BookmarkSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def add_bookmark(self, request, slug, post_id):
-        post = get_object_or_404(Post, post__blog_slug=self.kwargs['slug'], post_id=self.kwargs['post_id'])
+        post = get_object_or_404(Post, blog__slug=self.kwargs['slug'], post_id=self.kwargs['post_id'])
         user = get_object_or_404(UserProfile, username=request.user.username)
         if user:
             user.bookmarks.add(post)
@@ -703,8 +698,8 @@ class BookmarkView(viewsets.ModelViewSet):
         else:
             return Response({'status: unsuccessful'}, status=status.HTTP_404_NOT_FOUND)
 
-    def remove_bookmark(self, request):
-        post = get_object_or_404(Post, post__blog_slug=self.kwargs['slug'], post_id=self.kwargs['post_id'])
+    def remove_bookmark(self, request, slug, post_id):
+        post = get_object_or_404(Post, blog__slug=self.kwargs['slug'], post_id=self.kwargs['post_id'])
         user = get_object_or_404(UserProfile, username=request.user.username)
         user.bookmarks.remove(post)
         return Response({'status: success'}, status=status.HTTP_200_OK)
@@ -842,35 +837,25 @@ class PostCommentListView(viewsets.ModelViewSet):
             queryset = queryset.filter(reply_to=None)
 
         if queryset is not None:
+            queryset = queryset.annotate(
+                isLiked=Case(
+                When(liked_users=request.user, then=Value(True)),
+                  default=Value(False),
+                  output_field=BooleanField(),
+                ),
+                isDisliked=Case(
+                    When(disliked_users=request.user, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField(),
+                )
+            )
             paginate_queryset = self.paginate_queryset(queryset)
             serializer = self.serializer_class(paginate_queryset, many=True)
             response = self.get_paginated_response(serializer.data)
-
-            # tmp = serializer.data
-            # response = self.get_paginated_response(tmp)
-            # response.data['remaining_comments'] = response.data['count'] - 5 * response.data['page']
-            # print(result.data['count'])
-            # print(result.data.next)
-            # print(result.data.previous)
-            # print(serializer.data[1])
-            #  ostatok = count - page * listserializer
             return Response(data=response.data, status=status.HTTP_200_OK)
         else:
             return Response({'status': 'unsuccessful'}, status=status.HTTP_404_NOT_FOUND)
 
-        #
-        # if queryset is not None:
-        #     paginate_queryset = self.paginate_queryset(queryset)
-        #     serializer = self.serializer_class(paginate_queryset, many=True)
-        #
-        #     tmp = serializer.data
-        #     response = self.get_paginated_response(tmp)
-        #     response.data['count_of_blogs'] = count_of_blogs
-        #     response.data['count_of_posts'] = count_of_posts
-        #     response.data.move_to_end('results')
-        #     return Response(data=response.data, status=status.HTTP_200_OK)
-        # else:
-        #     return Response({'status': 'unsuccessful'}, status=status.HTTP_404_NOT_FOUND)
 
 class ChangeAvatarView(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
@@ -983,7 +968,7 @@ class BlogsWhereUserIsAuthor(viewsets.ModelViewSet):
             return Response({'status': 'unsuccessful'}, status=status.HTTP_404_NOT_FOUND)
 
 
-class BlogInvitations(viewsets.ModelViewSet):
+class BlogInvitationListView(viewsets.ModelViewSet):
     queryset = Invite.objects.all()
     serializer_class = InviteListUserSerializer
     pagination_class = ListSetPagination
@@ -991,13 +976,14 @@ class BlogInvitations(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
         blog_invitations = blog.invites.all()
-        paginatedResult = self.paginate_queryset(blog_invitations)
-        if paginatedResult is not None:
-            serializer = self.serializer_class(paginatedResult, many=True)
+        paginated_result = self.paginate_queryset(blog_invitations)
+        if paginated_result is not None:
+            serializer = self.serializer_class(paginated_result, many=True)
             result = self.get_paginated_response(serializer.data)
             return Response(result.data, status=status.HTTP_200_OK)
         else:
             return Response({'status': 'unsuccessful'}, status=status.HTTP_404_NOT_FOUND)
+
 
 class BlogComments(viewsets.ModelViewSet):
     queryset = Commentary.objects.all()
@@ -1014,3 +1000,254 @@ class BlogComments(viewsets.ModelViewSet):
             return Response(result.data, status=status.HTTP_200_OK)
         else:
             return Response({'status': 'unsuccessful'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class LikedPostListView(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    pagination_class = ListSetPagination
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.queryset
+        query_dict = {}
+
+        before = self.request.query_params.get('before', None)
+        after = self.request.query_params.get('after', None)
+        search = self.request.query_params.get('search', None)
+        sort_by = self.request.query_params.get('sort_by', None)
+
+        if after:
+            query_dict['created_at__gte'] = after
+        if before:
+            query_dict['created_at__lte'] = before
+
+        if search:
+            queryset = queryset.filter(Q(title__icontains=search))
+
+        if sort_by:
+            if sort_by == 'date':
+                queryset = queryset.order_by('-created_at')
+            if sort_by == '-date':
+                queryset = queryset.order_by('created_at')
+            if sort_by == 'title_asc':
+                queryset = queryset.order_by('title')
+            if sort_by == 'title_desc':
+                queryset = queryset.order_by('-title')
+
+        queryset = queryset.filter(**query_dict)
+
+        user = get_object_or_404(UserProfile, username=request.user)
+        if user:
+            queryset = queryset.filter(liked_users=user)
+            result = queryset.annotate(
+                isLiked=Case(
+                    When(liked_users=request.user, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField()
+                ),
+                isBookmarked=Case(
+                    When(bookmarks=request.user, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField()
+                ),
+                comments=Count('comment'),
+            )
+            paginate_queryset = self.paginate_queryset(result)
+            if paginate_queryset:
+                serializer = self.serializer_class(paginate_queryset, many=True)
+                result = self.get_paginated_response(serializer.data)
+                return Response(data=result.data, status=status.HTTP_200_OK)
+            else:
+                return Response({'status': 'unsuccessful'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'status': 'unsuccessful'}, status=status.HTTP_200_OK)
+
+
+class SubscriptionListView(viewsets.ModelViewSet):
+    queryset = Blog.objects.all()
+    serializer_class = PostSerializer
+    pagination_class = BlogListPagination
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        user = get_object_or_404(UserProfile, username=request.user)
+        blog_slug_list = self.queryset.filter(subscribers=user).values_list('slug')
+        post_list = Post.objects.filter(blog__slug__in=blog_slug_list).order_by('-created_at')
+
+        if user:
+            result = post_list.annotate(
+                isLiked=Case(
+                    When(liked_users=request.user, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField()
+                ),
+                isBookmarked=Case(
+                    When(bookmarks=request.user, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField()
+                ),
+                comments=Count('comment'),
+            )
+            paginate_queryset = self.paginate_queryset(result)
+            if paginate_queryset:
+                serializer = self.serializer_class(paginate_queryset, many=True)
+                result = self.get_paginated_response(serializer.data)
+                return Response(data=result.data, status=status.HTTP_200_OK)
+            else:
+                return Response({'status': 'unsuccessful'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'status': 'unsuccessful'}, status=status.HTTP_200_OK)
+
+
+class BookmarksListView(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    pagination_class = ListSetPagination
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.queryset
+        query_dict = {}
+
+        before = self.request.query_params.get('before', None)
+        after = self.request.query_params.get('after', None)
+        search = self.request.query_params.get('search', None)
+        sort_by = self.request.query_params.get('sort_by', None)
+
+        if after:
+            query_dict['created_at__gte'] = after
+        if before:
+            query_dict['created_at__lte'] = before
+
+        if search:
+            queryset = queryset.filter(Q(title__icontains=search))
+
+        if sort_by:
+            if sort_by == 'date':
+                queryset = queryset.order_by('-created_at')
+            if sort_by == '-date':
+                queryset = queryset.order_by('created_at')
+            if sort_by == 'title_asc':
+                queryset = queryset.order_by('title')
+            if sort_by == 'title_desc':
+                queryset = queryset.order_by('-title')
+
+        queryset = queryset.filter(**query_dict)
+
+        user = get_object_or_404(UserProfile, username=request.user)
+        if user:
+            queryset = queryset.filter(bookmarks=user)
+            result = queryset.annotate(
+                isLiked=Case(
+                    When(liked_users=request.user, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField()
+                ),
+                isBookmarked=Case(
+                    When(bookmarks=request.user, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField()
+                ),
+                comments=Count('comment'),
+            )
+            paginate_queryset = self.paginate_queryset(result)
+            if paginate_queryset:
+                serializer = self.serializer_class(paginate_queryset, many=True)
+                result = self.get_paginated_response(serializer.data)
+                return Response(data=result.data, status=status.HTTP_200_OK)
+            else:
+                return Response({'status': 'unsuccessful'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'status': 'unsuccessful'}, status=status.HTTP_200_OK)
+
+
+class SubscriptionMiniList(viewsets.ModelViewSet):
+    queryset = Blog.objects.all()
+    serializer_class = SubscriptionListMiniSerializer
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        user = get_object_or_404(UserProfile, username=request.user)
+        blog_list = self.queryset.filter(subscribers=user)
+        serializer = self.serializer_class(blog_list, many=True)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
+class BlogAuthorList(viewsets.ModelViewSet):
+    queryset = UserProfile.objects.all()
+    serializer_class = InviteGetUsersSerializer
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.queryset
+
+        query = self.request.query_params.get('query', None)
+        blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
+        if query:
+            query_authors = UserProfile.objects.filter(username__icontains=query, blog_list=blog)
+            serializer = self.serializer_class(query_authors, many=True)
+            return Response(data=serializer.data, status=status.HTTP_200_OK)
+        else:
+            blog_authors = blog.authors.all()
+            serializer = self.serializer_class(blog_authors, many=True)
+            return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
+class SetCommentLikeView(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def set_or_remove_like(self, request, slug, post_id, comment_id):
+        user = get_object_or_404(UserProfile, username=request.user)
+        blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
+        post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
+        comment = get_object_or_404(Commentary, comment_id=self.kwargs['comment_id'], post=post)
+        if comment.disliked_users.contains(user):
+            comment.disliked_users.remove(user)
+            comment.dislikes -= 1
+            if not comment.liked_users.contains(user):
+                comment.liked_users.add(user)
+                comment.likes += 1
+                comment.save(update_fields=("likes", "dislikes"))
+                return Response({'status': 'successful'}, status=status.HTTP_200_OK)
+            else:
+                comment.liked_users.remove(user)
+                comment.likes += 1
+                comment.save(update_fields=("likes",))
+                return Response({'status': 'successful'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            if not comment.liked_users.contains(user):
+                comment.liked_users.add(user)
+                comment.likes += 1
+                comment.save(update_fields=("likes",))
+                return Response({'status': 'successful'}, status=status.HTTP_200_OK)
+            else:
+                comment.liked_users.remove(user)
+                comment.likes -= 1
+                comment.save(update_fields=("likes",))
+                return Response({'status': 'successful'}, status=status.HTTP_200_OK)
+
+
+    def set_or_remove_dislike(self, request, slug, post_id, comment_id):
+        user = get_object_or_404(UserProfile, username=request.user)
+        blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
+        post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
+        comment = get_object_or_404(Commentary, comment_id=self.kwargs['comment_id'], post=post)
+        if comment.liked_users.contains(user):
+            comment.liked_users.remove(user)
+            comment.likes -= 1
+            if not comment.disliked_users.contains(user):
+                comment.disliked_users.add(user)
+                comment.dislikes =+ 1
+                comment.save(update_fields=("likes", "dislikes"))
+                return Response({'status': 'successful'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'status': 'unsuccessful'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            if not comment.disliked_users.contains(user):
+                comment.disliked_users.add(user)
+                comment.dislikes =+ 1
+                comment.save(update_fields=("dislikes",))
+                return Response({'status': 'successful'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'status': 'unsuccessful'}, status=status.HTTP_400_BAD_REQUEST)
