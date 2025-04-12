@@ -1,16 +1,13 @@
-from django.db.models import SlugField, TextField
-from rest_framework.fields import CharField
-from rest_framework.validators import UniqueValidator
+from rest_framework import serializers
+from django.core.exceptions import ValidationError
+
+def validate_avatar(value):
+    max_size = 4194304
+    if value.size > max_size:
+        raise ValidationError("Размер файла не должен превышать 4 МБ.")
 
 
-slug = SlugField(
-    max_length=25,
-    validators=[],
-)
-
-title = CharField(
-    max_length=100,
-
-)
-
-description = TextField
+def validate_avatar_small(value):
+    max_size = 2097152
+    if value.size > max_size:
+        raise ValidationError("Размер файла не должен превышать 2 МБ.")

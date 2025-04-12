@@ -10,22 +10,21 @@ class Blog(models.Model):
     title = models.CharField('Заголовок', max_length=255)
     email = models.CharField('Email', max_length=255, blank=True)
     phone_number = models.CharField('Номер телефона', max_length=255, blank=True)
-    site_link = models.CharField('Cсылка на свой сайт', max_length=255, blank=True)
     description = models.TextField('Тематика', null=True, blank=True)
     pinned_post = models.ForeignKey('Post', related_name='pinned_blogs', blank=True, null=True, on_delete=models.CASCADE)
     slug = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
     updated_at = models.DateTimeField('Дата последнего обновления', auto_now_add=True)
     owner = models.ForeignKey(UserProfile, related_name='blogs', on_delete=models.CASCADE)
+    map = models.TextField('Ссылка на карту')
     count_of_posts = models.PositiveIntegerField('Кол-во постов блога', default=0)
     count_of_commentaries = models.PositiveIntegerField('Кол-во комментариев блога', default=0)
     authors = models.ManyToManyField(UserProfile, related_name='blog_list', blank=True)
     vk_link = models.CharField('Ссылка на ВК', max_length=255, blank=True)
-    dzen_link = models.CharField('Ссылка на Дзен', max_length=255, blank=True)
-    ok_link = models.CharField('Ссылка на ОК', max_length=255, blank=True)
-    youtube_link = models.CharField('Ссылка на YouTube', max_length=255, blank=True)
     telegram_link = models.CharField('Ссылка на Telegram', max_length=255, blank=True)
-    map = models.TextField('Ссылка на карту')
+    youtube_link = models.CharField('Ссылка на YouTube', max_length=255, blank=True)
+    dzen_link = models.CharField('Ссылка на Дзен', max_length=255, blank=True)
+    site_link = models.CharField('Cсылка на свой сайт', max_length=255, blank=True)
 
     def __str__(self):
         return self.slug
@@ -52,9 +51,9 @@ class Post(models.Model):
     views = models.IntegerField('Счётчик просмотров', default=0)
     blog = models.ForeignKey(Blog, to_field='slug', related_name='posts', on_delete=models.CASCADE)
     tags = models.TextField('Тэги', null=True)
-    pinned_comment = models.ForeignKey('Commentary', related_name='pinned_comment', blank=True, null=True, on_delete=models.CASCADE)
     comments_allowed = models.BooleanField('Разрешены ли комментарии', default=True)
     map = models.TextField('Ссылка на карту', blank=True)
+    author_is_hidden = models.BooleanField('Не показывать автора', default=False)
 
     def __str__(self):
         return str(self.title)
@@ -81,6 +80,8 @@ class Commentary(models.Model):
     reply_to = models.ForeignKey('Commentary', on_delete=models.CASCADE, related_name='replies', blank=True, null=True)
     is_edited = models.BooleanField(default=False)
     liked_by_author = models.BooleanField(default=False)
+    is_pinned = models.BooleanField(default=False)
+    pinned_by_user = models.ForeignKey(UserProfile, related_name='pinned_commentaries', blank=True, null=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.comment_id)
@@ -89,6 +90,7 @@ class Commentary(models.Model):
 class Invite(models.Model):
     admin = models.ForeignKey(UserProfile, related_name='user_profile', on_delete=models.CASCADE)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
+    replied_at = models.DateTimeField('Дата ответа', null=True, blank=True)
     description = models.TextField('Описание')
     addressee = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     status = models.BooleanField('Статус приглашения', null=True)
@@ -98,8 +100,14 @@ class Invite(models.Model):
         return str(self.admin)
 
 
-# class Notification(models.Model):
-#     addressee = models.ForeignKey()
-#     author = models.ForeignKey()
-#     created_at = models.DateTimeField()
-#     is_read = models.BooleanField()
+class Notification(models.Model):
+    addressee = models.ForeignKey(UserProfile, related_name='addressee', on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, related_name='notifications', on_delete=models.CASCADE)
+    text = models.TextField('Текст уведомления')
+    author = models.ForeignKey(UserProfile, related_name='authors', on_delete=models.CASCADE)
+    created_at = models.DateTimeField('Дата создания', auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+    is_hidden = models.BooleanField(default=False)
+
+    def __str__(self):
+        return str(self.addressee)
