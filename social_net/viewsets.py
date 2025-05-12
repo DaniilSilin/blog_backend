@@ -18,7 +18,8 @@ from .serializers import (BlogSerializer, CreateBlogSerializer, UpdateBlogSerial
                           IsBlogAvailableSerializer, InviteGetUsersSerializer, PostCommentaryListSerializer,
                           BookmarkListSerializer, BookmarkSerializer, UserSerializer, ChangeAvatarSerializer,
                           SubscriptionListMiniSerializer, BlogMiniListSerializer, BlogCommentListDeleteSerializer,
-                          UpdateUserProfileSerializer, UserNotificationsSerializer, PostCommentarySerializer)
+                          UpdateUserProfileSerializer, UserNotificationsSerializer, PostCommentarySerializer, BlogDeletePostsSerializer,
+                          UpdateCommentarySerializer)
 
 
 class BlogPermissions(permissions.BasePermission):
@@ -70,15 +71,19 @@ class CommentaryPermissions(permissions.BasePermission):
             return bool((isBlogOwnerOrBlogAuthorOrAuthorOfComment or isAdmin) and IsAuthenticated)
 
     def has_object_permission(self, request, view, obj):
+        isAdmin = (IsAuthenticated and request.user.is_admin)
+        isBlogOwner = (IsAuthenticated and obj.post.blog.owner == request.user)
+        isBlogAuthor = (IsAuthenticated and obj.post.blog.authors.filter(username__contains=request.user))
+        isUserCommentAuthor = (IsAuthenticated and obj.author == request.user)
         if request.method in permissions.SAFE_METHODS:
-            isAdmin = (request.user and request.user.is_authenticated and request.user.is_admin)
-            IsBlogAuthor = obj.post.blog.authors.filter(username__contains=request.user)
-            IsBlogOwner = obj.post.blog.owner == request.user
             if obj.post.is_published:
                 return True
-            if not ((IsBlogAuthor or IsBlogOwner or isAdmin) and IsAuthenticated):
+            if not ((isBlogAuthor or isBlogOwner or isAdmin) and IsAuthenticated):
                 raise Http404
-        return True
+        if request.method == "DELETE":
+            return bool(isUserCommentAuthor or isAdmin or isBlogOwner)
+        if request.method == "PUT":
+            return bool(isUserCommentAuthor or isAdmin)
 
 
 class ListSetPagination(PageNumberPagination):
@@ -175,7 +180,7 @@ class BlogPage(viewsets.ModelViewSet):
         print(serializer.data)
         title = serializer.data['title']
         slug = serializer.data['slug']
-        description = serializer.data['description']
+        description = serializer.validated_data.get('description', '')
         avatar = request.FILES.get('avatar', None)
         avatar_small = request.FILES.get('avatar_small', None)
         owner = get_object_or_404(UserProfile, username=request.user)
@@ -416,7 +421,10 @@ class PostPage(viewsets.ModelViewSet):
         author = get_object_or_404(UserProfile, username=request.user)
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
         tags = serializer.data['tags']
+        map_type = serializer.data['map_type']
         map_1 = serializer.data['map']
+        author_is_hidden = serializer.data['author_is_hidden']
+        comments_allowed = serializer.data['comments_allowed']
         blog.count_of_posts += 1
         blog.save(update_fields=("count_of_posts",))
         post_id = blog.count_of_posts
@@ -424,8 +432,11 @@ class PostPage(viewsets.ModelViewSet):
         post = Post(
             title=title,
             body=body,
+            map_type=map_type,
             map=map_1,
             is_published=is_published,
+            author_is_hidden=author_is_hidden,
+            comments_allowed=comments_allowed,
             author=author,
             blog=blog,
             post_id=post_id,
@@ -617,9 +628,13 @@ class InviteGetUsers(viewsets.ModelViewSet):
 
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
         pending_invites = Invite.objects.filter(blog=blog, status=None).values_list('addressee__username', flat=True)
-        # current_blog_authors = UserProfile.objects.filter()
+        current_blog_authors = blog.authors.values_list('username', flat=True)
+        blog_owner_username = UserProfile.objects.filter(username=blog.owner.username).values_list('username', flat=True)
 
-        queryset = queryset.exclude(Q(username__in=pending_invites))
+        excluded_usernames = set(pending_invites) | set(current_blog_authors) | set(blog_owner_username)
+        print(excluded_usernames)
+
+        queryset = queryset.exclude(username__in=excluded_usernames)
         if query:
             user_list = queryset.filter(username__icontains=query)[:5]
             if user_list:
@@ -648,8 +663,10 @@ class UserProfileView(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         try:
-            blog = self.queryset.get(username=self.kwargs['username'])
-            serial = UpdateUserProfileSerializer(blog)
+            user = self.queryset.get(username=self.kwargs['username'])
+
+            user.subscriptionList = user.subscriptions.count()
+            serial = UpdateUserProfileSerializer(user)
             return Response(serial.data)
         except UserProfile.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -679,6 +696,16 @@ class PostSearchView(viewsets.ModelViewSet):
         queryset = result.annotate(
             isLiked=Case(
                 When(liked_users=request.user, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField()
+            ),
+            isDisliked=Case(
+                When(disliked_users=request.user, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField()
+            ),
+            isBookmarked=Case(
+                When(bookmarks=request.user, then=Value(True)),
                 default=Value(False),
                 output_field=BooleanField()
             ),
@@ -736,12 +763,25 @@ class BookmarkView(viewsets.ModelViewSet):
 class PinPostViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
-    def pin_post(self, request):
-        blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
-        post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
-        blog.pinned_post = post
-        blog.save(update_fields=("pinned_post",))
-        return Response({'status: success'}, status=status.HTTP_200_OK)
+    def pin_post(self, request, slug, post_id):
+        blog = get_object_or_404(Blog, slug=slug)
+        post = get_object_or_404(Post, post_id=post_id, blog=blog)
+        if not post.is_pinned:
+            post.is_pinned = True
+            post.save(update_fields=("is_pinned",))
+            return Response({'status: success'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'status: unsuccessful'}, status=status.HTTP_404_NOT_FOUND)
+
+    def unpin_post(self, request, slug, post_id):
+        blog = get_object_or_404(Blog, slug=slug)
+        post = get_object_or_404(Post, post_id=post_id, blog=blog)
+        if post.is_pinned:
+            post.is_pinned = False
+            post.save(update_fields=("is_pinned",))
+            return Response({'status: success'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'status: unsuccessful'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class PinCommentViewSet(viewsets.ModelViewSet):
@@ -813,27 +853,11 @@ class CommentaryPage(viewsets.ModelViewSet):
         reply_to = serializer.data['reply_to']
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
         post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
+        if reply_to:
+            parent_comment = get_object_or_404(Commentary, comment_id=reply_to, post=post)
         blog.count_of_commentaries += 1
         blog.save(update_fields=("count_of_commentaries",))
         comment_id = blog.count_of_commentaries
-
-        addressee_regex = r'@\w+'
-        addressees = re.findall(addressee_regex, body)
-        new_addressees = ' '.join(addressees).split('@')
-
-        for addressee in new_addressees:
-            print(addressee)
-            message = f'Пользователь {addressee} оставил комментарий "{body}"'
-            if UserProfile.objects.filter(username=addressee).exists():
-                user = UserProfile.objects.get(username=addressee)
-                notification = Notification(
-                    post=post,
-                    text=message,
-                    addressee=user,
-                    author=request.user,
-                    is_read=False,
-                )
-                notification.save()
 
         if reply_to:
             print(reply_to)
@@ -854,6 +878,27 @@ class CommentaryPage(viewsets.ModelViewSet):
                 comment_id=comment_id,
             )
         comm.save()
+
+        addressee_regex = r'@\w+'
+        addressees = re.findall(addressee_regex, body)
+        new_addressees = ' '.join(addressees).split('@')
+
+        for addressee in new_addressees:
+            print(addressee)
+            message = f'Пользователь {addressee} оставил комментарий "{body}"'
+            if UserProfile.objects.filter(username=addressee).exists():
+                user = UserProfile.objects.get(username=addressee)
+                notification = Notification(
+                    parent_comment=parent_comment,
+                    replied_comment=comm,
+                    post=post,
+                    text=message,
+                    addressee=user,
+                    author=request.user,
+                    is_read=False,
+                )
+                notification.save()
+
         serial = PostCommentarySerializer(comm, many=False)
         return Response(serial.data, status=status.HTTP_201_CREATED)
 
@@ -865,7 +910,7 @@ class CommentaryPage(viewsets.ModelViewSet):
         serializer = CreateCommentarySerializer(instance=comment, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'status: successful'}, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
@@ -898,13 +943,7 @@ class PostCommentNotificationView(viewsets.ModelViewSet):
 
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
         post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
-        comment = get_object_or_404(Commentary, comment_id=comment_reply, post=post)
-
-        comments_list = list(queryset)
-
-        if comment in comments_list:
-            comments_list.remove(comment)
-            comments_list.insert(0, comment)
+        # comment = get_object_or_404(Commentary, comment_id=comment_reply, post=post)
 
         if parent_id:
             model = Commentary.objects.get(comment_id=parent_id)
@@ -1009,6 +1048,16 @@ class BlogEditorPostsView(viewsets.ModelViewSet):
         queryset = self.queryset
 
         queryset = queryset.annotate(
+            isLiked=Case(
+                When(liked_users=request.user, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ),
+            isDisliked=Case(
+                When(disliked_users=request.user, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ),
             comments=Count('comment')
         )
 
@@ -1100,7 +1149,6 @@ class BlogsWhereUserIsAuthor(viewsets.ModelViewSet):
 
 
 class BlogInvitationListView(viewsets.ModelViewSet):
-    queryset = Invite.objects.all()
     serializer_class = InviteListUserSerializer
     pagination_class = ListSetPagination
 
@@ -1430,22 +1478,8 @@ class SetCommentLikeByAuthorView(viewsets.ModelViewSet):
             return Response({'status': 'successful'}, status=status.HTTP_200_OK)
 
 
-class BlogCommentListDeleteView(viewsets.ModelViewSet):
-    serializer_class = BlogCommentListDeleteSerializer
-    permission_classes = [IsAuthenticated]
-
-    def destroy(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        comment_list = serializer.data['comment_list']
-        blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
-        print(comment_list)
-        # for comment in comment_list:
-        return Response({'status: successful'}, status=status.HTTP_200_OK)
-
-
 class UserNotificationListView(viewsets.ModelViewSet):
-    queryset = Notification.objects.all()
+    queryset = Notification.objects.filter(is_hidden=False)
     permission_classes = [IsAuthenticated]
     serializer_class = UserNotificationsSerializer
     pagination_class = ListSetPagination
@@ -1486,3 +1520,33 @@ class HideNotificationView(viewsets.ModelViewSet):
             return Response({'status': 'successful'}, status=status.HTTP_200_OK)
         else:
             return Response({'status': 'unsuccessful'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class BlogDeletePostsView(viewsets.ModelViewSet):
+    serializer_class = BlogDeletePostsSerializer
+    permission_classes = [IsAuthenticated]
+
+    def delete_posts(self, request, slug):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        blog = get_object_or_404(Blog, slug=slug)
+        selected_posts = serializer.data['selectedPosts']
+        print(selected_posts)
+        for post in selected_posts:
+            post = get_object_or_404(Post, post_id=post, blog=blog)
+            post.delete()
+        return Response('status: successful', status=status.HTTP_200_OK)
+
+
+class BlogCommentsDeleteView(viewsets.ModelViewSet):
+    serializer_class = BlogCommentListDeleteSerializer
+    permission_classes = [IsAuthenticated]
+
+    def delete_comments(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        comment_list = serializer.data['comment_list']
+        blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
+        print(comment_list)
+        # for comment in comment_list:
+        return Response({'status: successful'}, status=status.HTTP_200_OK)

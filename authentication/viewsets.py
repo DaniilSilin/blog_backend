@@ -30,18 +30,21 @@ class LoginView(APIView):
 
 
 class RegisterView(viewsets.ModelViewSet):
-    queryset = UserProfile.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = (permissions.AllowAny,)
 
     def create(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
+        first_name = serializer.data['first_name']
+        last_name = serializer.data['last_name']
         email = serializer.data['email']
         username = serializer.data['username']
         password = serializer.data['password']
 
         user = UserProfile(
+            first_name=first_name,
+            last_name=last_name,
             email=email,
             username=username,
             is_admin=False
@@ -49,11 +52,11 @@ class RegisterView(viewsets.ModelViewSet):
         user.set_password(password)
         user.save()
 
-        user = authenticate(username=request.data['username'], password=request.data['password'])
-
-        if user:
-            token, created = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key}, status=status.HTTP_200_OK)
+        # user = authenticate(username=username, password=password)
+        #
+        # if user:
+        #     token, created = Token.objects.get_or_create(user=user)
+        return Response({'status': 'successful'}, status=status.HTTP_200_OK)
 
 
 class LogoutView(viewsets.ModelViewSet):

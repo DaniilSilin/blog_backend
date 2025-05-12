@@ -3,6 +3,13 @@ from rest_framework.serializers import CharField, ModelSerializer
 from django.core.validators import RegexValidator
 from .validators import validate_first_name, validate_last_name
 from .models import UserProfile
+from social_net.models import Blog
+from social_net.serializers import BlogSerializer
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Blog
+        fields = ('avatar_small', 'title')
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -22,7 +29,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     username = CharField(
         required=True,
-        min_length=150,
+        min_length=3,
+        max_length=150,
     )
 
     password = CharField(
@@ -59,6 +67,8 @@ class LogoutSerializer(serializers.ModelSerializer):
         fields = ('username', 'password')
 
 class UserSerializer(serializers.ModelSerializer):
+    subscriptions = SubscriptionSerializer(many=True)
+
     class Meta:
         model = UserProfile
         fields = '__all__'

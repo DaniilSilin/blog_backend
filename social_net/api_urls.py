@@ -1,17 +1,16 @@
 from django.urls import path
 from .viewsets import BlogList, BlogPage, PostList, MyPosts, BlogPosts, PostPage, CommentaryPage, BlogSubscription, BookmarksListView, \
     SubscriptionListViewSet, PostLikeDislikeViewSet, InvitationView, InvitationCreateView, InviteListView, LeaveBlogView, KickUserView, PinPostViewSet, \
-    IsBlogOwner, IsSlugAvailable, InviteGetUsers, UserProfileView, PostSearchView, PostCommentListView, BlogPublicationsView, \
-    BookmarkView, PinCommentViewSet, LikedUserList, ChangeAvatarView, DeleteAvatarView, BlogEditorPostsView, BlogsWhereUserIsOwner, \
-    BlogsWhereUserIsAuthor, BlogInvitationListView, BlogComments, LikedPostListView, SubscriptionListView, SubscriptionMiniList, BlogAuthorList, SetCommentLikeView, \
-    SetCommentLikeByAuthorView, BlogCommentListDeleteView, UserNotificationListView, PostCommentNotificationView, SetNotificationIsRead, HideNotificationView
+    IsBlogOwner, IsSlugAvailable, InviteGetUsers, UserProfileView, PostSearchView, PostCommentListView, BookmarkView, PinCommentViewSet, \
+    LikedUserList, ChangeAvatarView, DeleteAvatarView, BlogEditorPostsView, BlogsWhereUserIsOwner, BlogsWhereUserIsAuthor, BlogInvitationListView, \
+    BlogComments, LikedPostListView, SubscriptionListView, SubscriptionMiniList, BlogAuthorList, SetCommentLikeView, SetCommentLikeByAuthorView, \
+    BlogCommentsDeleteView, UserNotificationListView, PostCommentNotificationView, SetNotificationIsRead, HideNotificationView, BlogDeletePostsView, BlogPublicationsView
 
 blog_list = BlogList.as_view({'get': 'list'})
 blog_page = BlogPage.as_view({'post': 'create', 'put': 'update', 'get': 'retrieve', 'delete': 'destroy'})
 blog_create = BlogPage.as_view({'post': 'create'})
 blog_posts = BlogPosts.as_view({'get': 'list'})
 blog_comments = BlogComments.as_view({'get': 'list'})
-blog_comment_list_delete = BlogCommentListDeleteView.as_view({'delete': 'destroy'})
 # blog_authors = BlogAuthors.as_view({'get': 'list'})
 
 profile = UserProfileView.as_view({'get': 'retrieve', 'put': 'update'})
@@ -19,9 +18,6 @@ profile = UserProfileView.as_view({'get': 'retrieve', 'put': 'update'})
 blog_subscription = BlogSubscription.as_view({'post': 'toggle_subscription'})
 
 user_subscriptions = SubscriptionListViewSet.as_view({'get': 'list'})
-
-set_or_remove_like = PostLikeDislikeViewSet.as_view({'post': 'set_or_remove_like'})
-set_or_remove_dislike = PostLikeDislikeViewSet.as_view({'post': 'set_or_remove_dislike'})
 
 post_list = PostList.as_view({'get': 'list'})
 my_posts = MyPosts.as_view({'get': 'list'})
@@ -34,6 +30,7 @@ post_comment_list = PostCommentListView.as_view({'get': 'list'})
 post_comment_list_reply = PostCommentNotificationView.as_view({'get': 'list'})
 
 pin_post = PinPostViewSet.as_view({'post': 'pin_post'})
+unpin_post = PinPostViewSet.as_view({'post': 'unpin_post'})
 pin_comment = PinCommentViewSet.as_view({'post': 'pin_comment'})
 unpin_comment = PinCommentViewSet.as_view({'post': 'unpin_comment'})
 
@@ -72,6 +69,9 @@ subscriptions_mini = SubscriptionMiniList.as_view({'get': 'list'})
 
 blog_authors = BlogAuthorList.as_view({'get': 'list'})
 
+set_or_remove_like = PostLikeDislikeViewSet.as_view({'post': 'set_or_remove_like'})
+set_or_remove_dislike = PostLikeDislikeViewSet.as_view({'post': 'set_or_remove_dislike'})
+
 add_or_remove_bookmark = BookmarkView.as_view({'post': 'add_or_remove_bookmark'})
 set_or_remove_comment_like = SetCommentLikeView.as_view({'post': 'set_or_remove_like'})
 set_or_remove_comment_dislike = SetCommentLikeView.as_view({'post': 'set_or_remove_dislike'})
@@ -81,13 +81,17 @@ notification_list = UserNotificationListView.as_view({'get': 'list'})
 read_notification = SetNotificationIsRead.as_view({'post': 'read_notification'})
 hide_notification = HideNotificationView.as_view({'post': 'hide_notification'})
 
+blog_delete_posts = BlogDeletePostsView.as_view({"delete": "delete_posts"})
+blog_delete_comments = BlogCommentsDeleteView.as_view({"delete": "delete_comments"})
+
 urlpatterns = [
     path('blog/list/', blog_list, name='blog_list'),
     path('blog/create/', blog_page, name='create_blog'),
     path('blog/<slug:slug>/', blog_page, name='blog_page'),
     path('blog/<slug:slug>/subscription/', blog_subscription, name='blog_subscription'),
     path('blog/<slug:slug>/authors/', blog_authors, name='blog_authors'),
-    path('blog/<slug:slug>/comment/list/delete/', blog_comment_list_delete, name='blog_comment_list_delete'),
+
+    path('blog/<slug:slug>/posts/delete/', blog_delete_posts, name='blog_delete_posts'),
 
     path('blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/like_by_author/', set_or_remove_like_by_author,
          name='set_or_remove_like_by_author'),
@@ -112,6 +116,7 @@ urlpatterns = [
     path('blog/<slug:slug>/post/create/', post_create, name='create_post'),
     path('blog/<slug:slug>/post/<int:post_id>/', post_page, name='post_page'),
     path('blog/<slug:slug>/post/<int:post_id>/pin_post/', pin_post, name='pin_post'),
+    path('blog/<slug:slug>/post/<int:post_id>/unpin_post/', unpin_post, name='unpin_post'),
 
     path('blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/like/', set_or_remove_comment_like, name='add_like'),
     path('blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/dislike/', set_or_remove_comment_dislike, name='add_dislike'),

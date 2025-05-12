@@ -11,7 +11,6 @@ class Blog(models.Model):
     email = models.CharField('Email', max_length=255, blank=True)
     phone_number = models.CharField('Номер телефона', max_length=255, blank=True)
     description = models.TextField('Тематика', null=True, blank=True)
-    pinned_post = models.ForeignKey('Post', related_name='pinned_blogs', blank=True, null=True, on_delete=models.CASCADE)
     slug = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
     updated_at = models.DateTimeField('Дата последнего обновления', auto_now_add=True)
@@ -38,11 +37,16 @@ class Tag(models.Model):
 
 
 class Post(models.Model):
+    MAP_TYPES = [
+        ('interactive', 'Интерактивная'),
+        ('static', 'Статическая'),
+        ('null', 'Не выбрано')
+    ]
+
     author = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     title = models.CharField('Заголовок', max_length=255)
     post_id = models.PositiveIntegerField('ID поста', null=True)
     body = models.TextField('Тело поста')
-    is_published = models.BooleanField('Опубликован ли', default=False)
     created_at = models.DateTimeField('Дата публикации', auto_now_add=True)
     likes = models.IntegerField('Счётчик оценок', default=0)
     liked_users = models.ManyToManyField('authentication.UserProfile', related_name='alex', blank=True)
@@ -51,9 +55,12 @@ class Post(models.Model):
     views = models.IntegerField('Счётчик просмотров', default=0)
     blog = models.ForeignKey(Blog, to_field='slug', related_name='posts', on_delete=models.CASCADE)
     tags = models.TextField('Тэги', null=True)
-    comments_allowed = models.BooleanField('Разрешены ли комментарии', default=True)
+    map_type = models.CharField('Тип карты', max_length=50, choices=MAP_TYPES, default='null')
     map = models.TextField('Ссылка на карту', blank=True)
-    author_is_hidden = models.BooleanField('Не показывать автора', default=False)
+    is_pinned = models.BooleanField('Закреплён ли', default=False)
+    is_published = models.BooleanField('Опубликован ли', default=False)
+    author_is_hidden = models.BooleanField('Автор скрыт', default=False)
+    comments_allowed = models.BooleanField('Разрешены ли комментарии', default=True)
 
     def __str__(self):
         return str(self.title)
@@ -102,6 +109,8 @@ class Invite(models.Model):
 
 class Notification(models.Model):
     addressee = models.ForeignKey(UserProfile, related_name='addressee', on_delete=models.CASCADE)
+    parent_comment = models.ForeignKey(Commentary, on_delete=models.CASCADE, related_name='parent_comment')
+    replied_comment = models.ForeignKey(Commentary, on_delete=models.CASCADE, related_name='replied_comment')
     post = models.ForeignKey(Post, related_name='notifications', on_delete=models.CASCADE)
     text = models.TextField('Текст уведомления')
     author = models.ForeignKey(UserProfile, related_name='authors', on_delete=models.CASCADE)
