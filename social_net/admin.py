@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Blog, Post, UserProfile, Commentary, Tag, Invite, Notification
+from .models import Blog, Post, UserProfile, Commentary, Tag, Invite, Notification, PostImage
 
 
 class AdminPosts(admin.ModelAdmin):
@@ -32,9 +32,14 @@ class AdminNotifications(admin.ModelAdmin):
     list_display = ('addressee', 'author', 'created_at', 'is_read')
 
 
+class AdminPostImages(admin.ModelAdmin):
+    model = Notification
+    list_display = ('id', 'image')
+
 admin.site.register(Post, AdminPosts)
 admin.site.register(Blog, AdminBlog)
 admin.site.register(Commentary, AdminCommentary)
 admin.site.register(Tag, AdminTags)
 admin.site.register(Invite, AdminInvite)
 admin.site.register(Notification, AdminNotifications)
+admin.site.register(PostImage, AdminPostImages)

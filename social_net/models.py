@@ -74,6 +74,14 @@ class Post(models.Model):
         super(Post, self).save(*args, **kwargs)
 
 
+class PostImage(models.Model):
+    post = models.ForeignKey(Post, related_name='images', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='post_images/', null=True, blank=True)
+
+    def __str__(self):
+        return str(self.image)
+
+
 class Commentary(models.Model):
     author = models.ForeignKey(UserProfile, related_name='commentaries', on_delete=models.CASCADE)
     body = models.TextField('Тело комментария')

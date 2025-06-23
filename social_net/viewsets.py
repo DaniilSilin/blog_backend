@@ -10,7 +10,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 import re
 
 from authentication.models import UserProfile
-from .models import Blog, Post, Commentary, Invite, Notification
+from .models import Blog, Post, Commentary, Invite, Notification, PostImage
 from .serializers import (BlogSerializer, CreateBlogSerializer, UpdateBlogSerializer, PostSerializer, \
                           CreatePostSerializer, CreateCommentarySerializer, SubscriptionList,
                           UpdatePostSerializer, UserProfileSerializer, BlogCommentListSerializer,
@@ -370,6 +370,7 @@ class BlogPosts(viewsets.ModelViewSet):
 
 class PostPage(viewsets.ModelViewSet):
     queryset = Post.objects.all()
+    parser_class = (MultiPartParser, FormParser)
     permission_classes = [PostPermissions]
 
     def get_serializer_class(self):
@@ -381,6 +382,7 @@ class PostPage(viewsets.ModelViewSet):
         try:
             blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
             post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
+            post_images = post.images.all()
 
             post.isSubscribed = blog.subscribers.filter(username=request.user.username).exists()
             post.isLiked = request.user in post.liked_users.all()
@@ -389,6 +391,8 @@ class PostPage(viewsets.ModelViewSet):
 
             post.commentCount = post.comment.count()
             post.subscribers = post.blog.subscribers.count()
+
+            post.images1 = post_images
 
             serial = PostSerializer(post)
             post.views += 1
@@ -425,6 +429,7 @@ class PostPage(viewsets.ModelViewSet):
         map_1 = serializer.data['map']
         author_is_hidden = serializer.data['author_is_hidden']
         comments_allowed = serializer.data['comments_allowed']
+        images = request.FILES.getlist('images')
         blog.count_of_posts += 1
         blog.save(update_fields=("count_of_posts",))
         post_id = blog.count_of_posts
@@ -442,8 +447,16 @@ class PostPage(viewsets.ModelViewSet):
             post_id=post_id,
             tags=tags,
         )
-
+        print(post)
         post.save()
+
+        for image in images:
+            post_image = PostImage(
+                post=post,
+                image=image
+            )
+            post_image.save()
+
         post_serializer = PostSerializer(post)
         return Response(data=post_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -978,6 +991,8 @@ class PostCommentListView(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.queryset.filter(post__blog__slug=self.kwargs['slug'], post__post_id=self.kwargs['post_id'])
+        blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
+        post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
 
         parent_id = self.request.query_params.get('parent_id', None)
         sort_by = self.request.query_params.get('sort_by', None)
@@ -989,7 +1004,7 @@ class PostCommentListView(viewsets.ModelViewSet):
                 queryset = queryset.order_by('-is_pinned', 'created_at')
 
         if parent_id:
-            model = Commentary.objects.get(comment_id=parent_id)
+            model = Commentary.objects.get(comment_id=parent_id, post=post, post__blog=blog)
             queryset = queryset.filter(reply_to=model)
         else:
             queryset = queryset.filter(reply_to=None)

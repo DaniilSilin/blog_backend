@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.serializers import CharField, URLField, ImageField, SlugField, IntegerField, BooleanField, ListField
-from .models import Blog, Post, Commentary, UserProfile, Tag, Invite, Notification
+from .models import Blog, Post, Commentary, UserProfile, Tag, Invite, Notification, PostImage
 from .validators import validate_avatar_small, validate_avatar
 from rest_framework.validators import UniqueValidator
 
@@ -101,7 +101,7 @@ class UpdateBlogSerializer(serializers.ModelSerializer):
     avatar = ImageField(allow_null=True, validators=[validate_avatar])
     banner = ImageField(allow_null=True)
     title = CharField(required=True, max_length=50)
-    description = CharField(required=False, max_length=200)
+    description = CharField(required=False, max_length=300)
     phone_number = CharField(required=False, max_length=15)
     email = CharField(required=False)
     map = CharField(required=False)
@@ -117,6 +117,11 @@ class UpdateBlogSerializer(serializers.ModelSerializer):
                   'dzen_link', 'site_link')
         read_only_fields = ('slug', 'created_at', 'updated_at', 'count_of_posts', 'owner', 'count_of_commentaries')
 
+class PostImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostImage
+        fields = ('id', 'image')  # Adjust fields as necessary
+
 
 class PostSerializer(serializers.ModelSerializer):
     blog = BlogSerializer()
@@ -131,10 +136,11 @@ class PostSerializer(serializers.ModelSerializer):
     subscribers = serializers.IntegerField(read_only=True)
     comments = serializers.IntegerField(read_only=True)
     liked_users = serializers.SerializerMethodField()
+    images1 = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
-        fields = ('id', 'title', 'author', 'body', 'is_published', 'created_at', 'likes', 'dislikes', 'views', 'post_id', 'blog',
+        fields = ('id', 'title', 'author', 'body', 'is_published', 'images1', 'created_at', 'likes', 'dislikes', 'views', 'post_id', 'blog',
                   'tags', 'liked_users', 'disliked_users', 'isLiked', 'isDisliked', 'likedUsersCount', 'commentCount', 'subscribers',
                   'isSubscribed', 'isBookmarked', 'comments', 'map', 'author_is_hidden', 'comments_allowed')
         read_only_fields = ('slug', 'created_at', 'updated_at', 'count_of_posts', 'count_of_commentaries', 'map')
@@ -142,6 +148,10 @@ class PostSerializer(serializers.ModelSerializer):
     def get_liked_users(self, obj):
         users = obj.liked_users.all()[:5]
         return UserSerializer(users, many=True).data
+
+    def get_images1(self, obj):
+        images = obj.images.all()
+        return PostImageSerializer(images, many=True).data
 
 
 class CreatePostSerializer(serializers.ModelSerializer):
@@ -152,10 +162,11 @@ class CreatePostSerializer(serializers.ModelSerializer):
     is_published = BooleanField(default=False)
     author_is_hidden = BooleanField(default=False)
     comments_allowed = BooleanField(default=True)
+    images = ListField(child=ImageField())
 
     class Meta:
         model = Post
-        fields = ('title', 'body', 'map_type', 'map', 'tags', 'is_published', 'author_is_hidden', 'comments_allowed')
+        fields = ('title', 'body', 'images', 'map_type', 'map', 'tags', 'is_published', 'author_is_hidden', 'comments_allowed')
 
 
 class UpdatePostSerializer(serializers.ModelSerializer):
