@@ -10,6 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+from social_net.middleware import DisableCSRFMiddleware
+from corsheaders.middleware import CorsMiddleware
+
 from pathlib import Path
 import os
 
@@ -37,7 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    # 'daphne',
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
@@ -55,10 +57,6 @@ REST_FRAMEWORK = {
     ],
 }
 
-CORS_ALLOW_HEADERS =  [
-    'content-type',
-]
-
 # CHANNEL_LAYERS = {
 #     'default': {
 #         'BACKEND': 'channels_redis.core.RedisChannelLayer',
@@ -69,14 +67,15 @@ CORS_ALLOW_HEADERS =  [
 # }
 
 MIDDLEWARE = [
+    'social_net.middleware.DisableCSRFMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'social_net.middleware.DisableCSRFMiddleware'
 ]
 
 ROOT_URLCONF = 'mediasoft_django_hard.urls'
@@ -84,11 +83,10 @@ ROOT_URLCONF = 'mediasoft_django_hard.urls'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
-CORS_ALLOW_ALL_ORIGINS = True
-
 CORS_ALLOWED_ORIGINS = [
-       "http://127.0.0.1:3001",
-       "ws://127.0.0.1:3001",
+        "http://127.0.0.1:3001",
+        "http://localhost:3000",
+        "http://localhost:3001",
 ]
 
 TEMPLATES = [
