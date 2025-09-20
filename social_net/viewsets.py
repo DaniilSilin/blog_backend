@@ -282,6 +282,11 @@ class PostList(viewsets.ModelViewSet):
                 isBookmarked=Value(False, output_field=BooleanField()),
                 comments=Count('comment')
             )
+
+        print(queryset)
+        queryset = queryset.distinct()
+        print(queryset)
+
         paginatedResult = self.paginate_queryset(queryset)
         if paginatedResult is not None:
             serializer = self.serializer_class(paginatedResult, many=True)
@@ -1008,7 +1013,6 @@ class PostCommentListView(viewsets.ModelViewSet):
             queryset = queryset.filter(reply_to=model)
         else:
             queryset = queryset.filter(reply_to=None)
-
 
         if request.user.is_authenticated:
             queryset = queryset.annotate(
