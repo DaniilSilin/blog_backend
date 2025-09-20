@@ -27,9 +27,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-gagk*+@v!r)r0x60+ehv7p%7q0=gs2cah(k19si!k^3i5metn#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '79.174.92.166'
+]
 
 
 # Application definition
@@ -84,8 +86,7 @@ MEDIA_URL = '/media/'
 
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3001",
-    "http://localhost:3000",
-    "http://localhost:3001",
+    "http://127.0.0.1:3000",
 ]
 
 TEMPLATES = [
