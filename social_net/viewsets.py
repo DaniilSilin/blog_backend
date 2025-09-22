@@ -130,11 +130,6 @@ class BlogList(viewsets.ModelViewSet):
 
         queryset = queryset.filter(**query_dict)
 
-        is_author_subquery = Blog.authors.through.objects.filter(
-            blog=OuterRef('pk'),
-            userprofile=request.user
-        )
-
         if request.user.is_authenticated:
             queryset = queryset.annotate(
                 subscriberList=Count('subscribers'),
@@ -144,7 +139,7 @@ class BlogList(viewsets.ModelViewSet):
                       default=Value(False),
                       output_field=BooleanField(),
                 ),
-                isBlogAuthor=Exists(is_author_subquery)
+                # isBlogAuthor=Exists(is_author_subquery)
             )
         else:
             queryset = queryset.annotate(
@@ -225,7 +220,7 @@ class PostList(viewsets.ModelViewSet):
     queryset = Post.objects.filter(is_published=True).order_by('-created_at')
     serializer_class = PostSerializer
     pagination_class = ListSetPagination
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
 
     def list(self, request, *args, **kwargs):
         queryset = self.queryset
@@ -258,22 +253,16 @@ class PostList(viewsets.ModelViewSet):
 
         if request.user.is_authenticated:
             queryset = queryset.annotate(
-                isLiked=Case(
-                    When(liked_users=request.user, then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField()
+                isLiked=Exists(
+                    Post.objects.filter(liked_users=request.user, id=OuterRef('pk'))
                 ),
-                isDisliked=Case(
-                    When(disliked_users=request.user, then=Value(False)),
-                    default=Value(False),
-                    output_field=BooleanField()
+                isDisliked=Exists(
+                    Post.objects.filter(disliked_users=request.user, id=OuterRef('pk'))
                 ),
-                isBookmarked=Case(
-                    When(bookmarks=request.user, then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField()
+                isBookmarked=Exists(
+                    UserProfile.objects.filter(bookmarks=OuterRef('pk'), id=request.user.id)
                 ),
-                comments=Count('comment'),
+                comments=Count('comment')
             )
         else:
             queryset = queryset.annotate(
@@ -283,13 +272,9 @@ class PostList(viewsets.ModelViewSet):
                 comments=Count('comment')
             )
 
-        print(queryset)
-        queryset = queryset.distinct()
-        print(queryset)
-
-        paginatedResult = self.paginate_queryset(queryset)
-        if paginatedResult is not None:
-            serializer = self.serializer_class(paginatedResult, many=True)
+        paginated_result = self.paginate_queryset(queryset)
+        if paginated_result is not None:
+            serializer = self.serializer_class(paginated_result, many=True)
             result = self.get_paginated_response(serializer.data)
             return Response(result.data, status=status.HTTP_200_OK)
         else:
@@ -625,10 +610,11 @@ class IsBlogOwner(viewsets.ModelViewSet):
 
 class IsSlugAvailable(viewsets.ModelViewSet):
     queryset = Blog.objects.all()
+    permission_classes = [AllowAny]
 
     def is_slug_available(self, request, slug):
-        blog = self.queryset.filter(slug=slug).exists()
-        if blog:
+        slug_exists = self.queryset.filter(slug=slug).exists()
+        if slug_exists:
             return Response('Этот адрес уже занят', status=status.HTTP_200_OK)
         else:
             return Response('Адрес свободен', status=status.HTTP_200_OK)
@@ -1398,7 +1384,10 @@ class BookmarksListView(viewsets.ModelViewSet):
                     output_field=BooleanField()
                 ),
                 comments=Count('comment'),
-            )
+            ).distinct()
+
+            print(queryset)
+
             paginate_queryset = self.paginate_queryset(result)
             if paginate_queryset:
                 serializer = self.serializer_class(paginate_queryset, many=True)

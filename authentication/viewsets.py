@@ -1,5 +1,6 @@
 from django.http import HttpResponseRedirect
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status, viewsets, permissions
 from django.contrib.auth import login, logout, authenticate
 from django.shortcuts import redirect
@@ -61,7 +62,7 @@ class RegisterView(viewsets.ModelViewSet):
 
 class LogoutView(viewsets.ModelViewSet):
     serializer_class = LogoutSerializer
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = [AllowAny]
 
     def retrieve(self, request, *args, **kwargs):
         logout(request)
@@ -70,7 +71,7 @@ class LogoutView(viewsets.ModelViewSet):
 
 class UserDataView(viewsets.ModelViewSet):
     serializer_class = UserSerializer
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = [AllowAny]
 
     def retrieve(self, request, *args, **kwargs):
         return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
@@ -78,11 +79,23 @@ class UserDataView(viewsets.ModelViewSet):
 
 class IsUsernameAvailable(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = [AllowAny]
 
     def is_username_available(self, request, username):
         username_exists = self.queryset.filter(username=username).exists()
         if username_exists:
-            return Response('123', status=status.HTTP_200_OK)
+            return Response({'available': False}, status=status.HTTP_200_OK)
         else:
-            return Response('321', status=status.HTTP_200_OK)
+            return Response({'available': True}, status=status.HTTP_200_OK)
+
+class IsEmailAvailable(viewsets.ModelViewSet):
+    queryset = UserProfile.objects.all()
+    permission_classes = [AllowAny]
+
+    def is_email_available(self, request, email):
+        email_exists = self.queryset.filter(email=email).exists()
+        if email_exists:
+            return Response({'available': False, 'message': 'Email already exists.'},
+                            status=status.HTTP_200_OK)
+        else:
+            return Response({'available': True, 'message': 'Email is available.'}, status=status.HTTP_200_OK)

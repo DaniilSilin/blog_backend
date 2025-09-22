@@ -30,9 +30,10 @@ SECRET_KEY = 'django-insecure-gagk*+@v!r)r0x60+ehv7p%7q0=gs2cah(k19si!k^3i5metn#
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    '79.174.92.166'
+    '79.174.92.166',
+    '127.0.0.1',
+    '0.0.0.0',
 ]
-
 
 # Application definition
 
@@ -69,14 +70,16 @@ REST_FRAMEWORK = {
 
 MIDDLEWARE = [
     'social_net.middleware.DisableCSRFMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 
 ROOT_URLCONF = 'mediasoft_django_hard.urls'
@@ -84,6 +87,8 @@ ROOT_URLCONF = 'mediasoft_django_hard.urls'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 
 CORS_ALLOWED_ORIGINS = [
@@ -151,8 +156,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
@@ -166,13 +169,6 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
-
-STATIC_URL = '/static/'
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Путь к директории, где будут собираться статические файлы
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Убедитесь, что эта папка существует
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
