@@ -1,6 +1,7 @@
 *.sqlite3
 *.pyc
 .idea
+.env
 
 /media
 /static
