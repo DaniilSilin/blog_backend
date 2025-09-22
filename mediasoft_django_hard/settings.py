@@ -99,6 +99,10 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3001",
     "http://127.0.0.1:3000",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "localhost:3000",
+    "localhost:3001",
 ]
 
 TEMPLATES = [
