@@ -32,14 +32,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
-CORS_ALLOW_ALL_ORIGINS = True
+DEBUG = True
 
 ALLOWED_HOSTS = [
     '79.174.92.166',
     '127.0.0.1',
-    '0.0.0.0',
     'localhost',
 ]
 
@@ -99,10 +96,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 CORS_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:8080",
-    "http://localhost:8080",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    "http://79.174.92.166",
 ]
 
 TEMPLATES = [
