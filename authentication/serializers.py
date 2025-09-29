@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.serializers import CharField, ModelSerializer
 from django.core.validators import RegexValidator
-from .validators import validate_first_name, validate_last_name, validate_email
+from .validators import validate_first_name, validate_last_name
 from .models import UserProfile
 from social_net.models import Blog
 from social_net.serializers import BlogSerializer
