@@ -13,7 +13,7 @@ blog_posts = BlogPosts.as_view({'get': 'list'})
 blog_comments = BlogComments.as_view({'get': 'list'})
 # blog_authors = BlogAuthors.as_view({'get': 'list'})
 
-profile = UserProfileView.as_view({'get': 'retrieve', 'put': 'update'})
+profile = UserProfileView.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})
 
 blog_subscription = BlogSubscription.as_view({'post': 'toggle_subscription'})
 

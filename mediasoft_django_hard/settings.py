@@ -32,12 +32,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     '79.174.92.166',
+    'daniil.silin.work',
     '127.0.0.1',
-    'localhost',
 ]
 
 # Application definition
@@ -97,6 +97,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 CORS_ALLOWED_ORIGINS = [
     "http://79.174.92.166",
+    "http://daniil.silin.work",
 ]
 
 TEMPLATES = [

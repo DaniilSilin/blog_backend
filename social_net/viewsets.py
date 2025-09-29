@@ -615,9 +615,9 @@ class IsSlugAvailable(viewsets.ModelViewSet):
     def is_slug_available(self, request, slug):
         slug_exists = self.queryset.filter(slug=slug).exists()
         if slug_exists:
-            return Response('Этот адрес уже занят', status=status.HTTP_200_OK)
+            return Response({'available': False}, status=status.HTTP_200_OK)
         else:
-            return Response('Адрес свободен', status=status.HTTP_200_OK)
+            return Response({'available': True}, status=status.HTTP_200_OK)
 
 
 class InviteGetUsers(viewsets.ModelViewSet):
@@ -668,7 +668,6 @@ class UserProfileView(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         try:
             user = self.queryset.get(username=self.kwargs['username'])
-
             user.subscriptionList = user.subscriptions.count()
             serial = UpdateUserProfileSerializer(user)
             return Response(serial.data)
@@ -681,6 +680,11 @@ class UserProfileView(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'status': 'successful'}, status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        user = get_object_or_404(UserProfile, username=self.kwargs['username'])
+        user.delete()
+        return Response({'status: successful'}, status=status.HTTP_200_OK)
 
 
 class PostSearchView(viewsets.ModelViewSet):
