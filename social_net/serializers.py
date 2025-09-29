@@ -352,7 +352,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = '__all__'
+        fields = ('id', 'last_login', 'is_superuser', 'username', 'first_name', 'last_name', 'email', 'is_active', 'date_joined', 'is_admin',
+                  'gender', 'description', 'date_of_birth', 'is_profile_private', 'last_activity', 'avatar', 'avatar_small', 'banner', 'banner_small')
 
 
 class UpdateUserProfileSerializer(serializers.ModelSerializer):
