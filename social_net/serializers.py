@@ -180,7 +180,7 @@ class UpdatePostSerializer(serializers.ModelSerializer):
 
 class UpdateCommentarySerializer(serializers.ModelSerializer):
     author = UserSerializer()
-    count_of_replies = serializers.SerializerMethodField()
+    replies_count = serializers.SerializerMethodField()
     isLiked = serializers.BooleanField()
     isDisliked = serializers.BooleanField()
     reply_to = serializers.SerializerMethodField()
@@ -188,10 +188,10 @@ class UpdateCommentarySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Commentary
-        fields = ('comment_id', 'body', 'author', 'created_at', 'likes', 'dislikes', 'is_edited', 'reply_to', 'count_of_replies', 'liked_by_author',
+        fields = ('comment_id', 'body', 'author', 'created_at', 'likes', 'dislikes', 'is_edited', 'reply_to', 'replies_count', 'liked_by_author',
                   'isLiked', 'isDisliked', 'is_pinned', "pinned_by_user")
 
-    def get_count_of_replies(self, obj):
+    def get_replies_count(self, obj):
         replies = obj.replies.count()
         return replies
 
@@ -220,16 +220,16 @@ class CreateCommentarySerializer(serializers.ModelSerializer):
 
 class PostCommentarySerializer(serializers.ModelSerializer):
     author = UserSerializer()
-    count_of_replies = serializers.SerializerMethodField()
+    replies_count = serializers.SerializerMethodField()
     isLiked= serializers.BooleanField(default=False)
     isDisliked = serializers.BooleanField(default=False)
     reply_to = serializers.SerializerMethodField()
 
     class Meta:
         model = Commentary
-        fields = ('comment_id', 'body', 'author', 'created_at', 'likes', 'dislikes', 'is_edited', 'reply_to', 'count_of_replies', 'liked_by_author', 'isLiked', 'isDisliked')
+        fields = ('comment_id', 'body', 'author', 'created_at', 'likes', 'dislikes', 'is_edited', 'reply_to', 'replies_count', 'liked_by_author', 'isLiked', 'isDisliked')
 
-    def get_count_of_replies(self, obj):
+    def get_replies_count(self, obj):
         replies = obj.replies.count()
         return replies
 
@@ -242,22 +242,22 @@ class PostCommentarySerializer(serializers.ModelSerializer):
 class BlogCommentListSerializer(serializers.ModelSerializer):
     post = PostSerializer()
     author = UserSerializer()
-    count_of_replies = serializers.SerializerMethodField()
+    replies_count = serializers.SerializerMethodField()
     isLiked = serializers.BooleanField()
     isDisliked = serializers.BooleanField()
 
     class Meta:
         model = Commentary
-        fields = ('comment_id', 'body', 'author', 'created_at', 'likes', 'dislikes', 'is_edited', 'reply_to', 'post', 'isLiked', 'isDisliked', 'count_of_replies', 'liked_by_author')
+        fields = ('comment_id', 'body', 'author', 'created_at', 'likes', 'dislikes', 'is_edited', 'reply_to', 'post', 'isLiked', 'isDisliked', 'replies_count', 'liked_by_author')
 
-    def get_count_of_replies(self, obj):
+    def get_replies_count(self, obj):
         replies = obj.replies.count()
         return replies
 
 
 class PostCommentaryListSerializer(serializers.ModelSerializer):
     author = UserSerializer()
-    count_of_replies = serializers.SerializerMethodField()
+    replies_count = serializers.SerializerMethodField()
     isLiked = serializers.BooleanField()
     isDisliked = serializers.BooleanField()
     reply_to = serializers.SerializerMethodField()
@@ -265,10 +265,10 @@ class PostCommentaryListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Commentary
-        fields = ('comment_id', 'body', 'author', 'created_at', 'likes', 'dislikes', 'is_edited', 'reply_to', 'count_of_replies', 'liked_by_author',
+        fields = ('comment_id', 'body', 'author', 'created_at', 'likes', 'dislikes', 'is_edited', 'reply_to', 'replies_count', 'liked_by_author',
                   'isLiked', 'isDisliked', 'is_pinned', "pinned_by_user")
 
-    def get_count_of_replies(self, obj):
+    def get_replies_count(self, obj):
         replies = obj.replies.count()
         return replies
 
@@ -391,7 +391,7 @@ class UserNotificationsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Notification
-        fields = ['pk', 'addressee', 'text', 'author', 'created_at', 'is_read', 'post']
+        fields = ['id', 'addressee', 'text', 'author', 'created_at', 'is_read', 'post']
 
 
 class BlogDeletePostsSerializer(serializers.ModelSerializer):

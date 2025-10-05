@@ -946,30 +946,24 @@ class PostCommentNotificationView(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         queryset = self.queryset.filter(post__blog__slug=self.kwargs['slug'], post__post_id=self.kwargs['post_id'])
 
-        comment_reply = self.request.query_params.get('comment_reply', None)
         parent_id = self.request.query_params.get('parent_id', None)
 
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
         post = get_object_or_404(Post, post_id=self.kwargs['post_id'], blog=blog)
-        # comment = get_object_or_404(Commentary, comment_id=comment_reply, post=post)
 
         if parent_id:
-            model = Commentary.objects.get(comment_id=parent_id)
-            queryset = queryset.filter(reply_to=model)
+            parent_comment = Commentary.objects.get(comment_id=parent_id, post=post, post__blog=blog)
+            queryset = queryset.filter(reply_to=parent_comment)
         else:
             queryset = queryset.filter(reply_to=None)
 
         queryset = queryset.annotate(
-            isLiked=Case(
-                When(liked_users=request.user, then=Value(True)),
-                default=Value(False),
-                output_field=BooleanField(),
-            ),
-            isDisliked=Case(
-                When(disliked_users=request.user, then=Value(True)),
-                default=Value(False),
-                output_field=BooleanField(),
-            )
+            isLiked=Exists(
+                    Commentary.objects.filter(liked_users=request.user, id=OuterRef('pk'))
+                ),
+            isDisliked=Exists(
+                    Commentary.objects.filter(disliked_users=request.user, id=OuterRef('pk'))
+                )
         )
 
         paginate_queryset = self.paginate_queryset(queryset)
