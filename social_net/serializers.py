@@ -394,8 +394,14 @@ class UserNotificationsSerializer(serializers.ModelSerializer):
         fields = ['id', 'addressee', 'text', 'author', 'created_at', 'is_read', 'post']
 
 
-class BlogDeletePostsSerializer(serializers.ModelSerializer):
-    selectedPosts = ListField(child=IntegerField())
+class PostIdSerializer(serializers.Serializer):
+    post_id = serializers.IntegerField()
+
+class BlogDeletePostListSerializer(serializers.Serializer):
+    selectedPosts = serializers.ListField(
+        child=PostIdSerializer(),
+        allow_empty=False
+    )
 
     class Meta:
         model = Post

@@ -18,7 +18,7 @@ from .serializers import (BlogSerializer, CreateBlogSerializer, UpdateBlogSerial
                           IsBlogAvailableSerializer, InviteGetUsersSerializer, PostCommentaryListSerializer,
                           BookmarkListSerializer, BookmarkSerializer, UserSerializer, ChangeAvatarSerializer,
                           SubscriptionListMiniSerializer, BlogMiniListSerializer, BlogCommentListDeleteSerializer,
-                          UpdateUserProfileSerializer, UserNotificationsSerializer, PostCommentarySerializer, BlogDeletePostsSerializer,
+                          UpdateUserProfileSerializer, UserNotificationsSerializer, PostCommentarySerializer, BlogDeletePostListSerializer,
                           UpdateCommentarySerializer)
 
 
@@ -1045,21 +1045,17 @@ class BlogEditorPostsView(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     pagination_class = ListSetPagination
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
 
     def list(self, request, *args, **kwargs):
         queryset = self.queryset
 
         queryset = queryset.annotate(
-            isLiked=Case(
-                When(liked_users=request.user, then=Value(True)),
-                default=Value(False),
-                output_field=BooleanField(),
+            isLiked=Exists(
+                Post.objects.filter(liked_users=request.user, id=OuterRef('pk'))
             ),
-            isDisliked=Case(
-                When(disliked_users=request.user, then=Value(True)),
-                default=Value(False),
-                output_field=BooleanField(),
+            isDisliked=Exists(
+                Post.objects.filter(disliked_users=request.user, id=OuterRef('pk'))
             ),
             comments=Count('comment')
         )
@@ -1529,7 +1525,7 @@ class HideNotificationView(viewsets.ModelViewSet):
 
 
 class BlogDeletePostsView(viewsets.ModelViewSet):
-    serializer_class = BlogDeletePostsSerializer
+    serializer_class = BlogDeletePostListSerializer
     permission_classes = [IsAuthenticated]
 
     def delete_posts(self, request, slug):
@@ -1537,11 +1533,10 @@ class BlogDeletePostsView(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         blog = get_object_or_404(Blog, slug=slug)
         selected_posts = serializer.data['selectedPosts']
-        print(selected_posts)
-        for post in selected_posts:
-            post = get_object_or_404(Post, post_id=post, blog=blog)
+        for selected_post in selected_posts:
+            post = get_object_or_404(Post, post_id=selected_post['post_id'], blog=blog)
             post.delete()
-        return Response('status: successful', status=status.HTTP_200_OK)
+        return Response({'status: successful'}, status=status.HTTP_200_OK)
 
 
 class BlogCommentsDeleteView(viewsets.ModelViewSet):
