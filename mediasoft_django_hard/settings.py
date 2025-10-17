@@ -34,6 +34,11 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+CORS_ALLOWED_ORIGINS = [
+    "http://79.174.92.166",
+    "http://daniil.silin.work",
+]
+
 ALLOWED_HOSTS = [
     "79.174.92.166",
     "daniil.silin.work",
@@ -53,6 +58,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "authentication.apps.AuthenticationConfig",
     "social_net.apps.SocialNetConfig",
+    "invites.apps.InvitesConfig",
     "corsheaders",
 ]
 
@@ -95,10 +101,6 @@ MEDIA_URL = "/media/"
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
-CORS_ALLOWED_ORIGINS = [
-    "http://79.174.92.166",
-    "http://daniil.silin.work",
-]
 
 TEMPLATES = [
     {

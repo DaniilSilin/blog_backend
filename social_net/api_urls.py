@@ -11,15 +11,11 @@ from .viewsets import (
     BookmarksListView,
     SubscriptionListViewSet,
     PostLikeDislikeViewSet,
-    InvitationView,
-    InvitationCreateView,
-    InviteListView,
     LeaveBlogView,
     KickUserView,
     PinPostViewSet,
     IsBlogOwner,
     IsSlugAvailable,
-    InviteGetUsers,
     UserProfileView,
     PostSearchView,
     PostCommentListView,
@@ -31,7 +27,6 @@ from .viewsets import (
     BlogEditorPostsView,
     BlogsWhereUserIsOwner,
     BlogsWhereUserIsAuthor,
-    BlogInvitationListView,
     BlogComments,
     LikedPostListView,
     SubscriptionListView,
@@ -82,12 +77,6 @@ unpin_post = PinPostViewSet.as_view({"post": "unpin_post"})
 pin_comment = PinCommentViewSet.as_view({"post": "pin_comment"})
 unpin_comment = PinCommentViewSet.as_view({"post": "unpin_comment"})
 
-invite_create = InvitationCreateView.as_view({"post": "create"})
-invite_list = InviteListView.as_view({"get": "list"})
-invite_accept = InvitationView.as_view({"post": "accept_invite"})
-invite_reject = InvitationView.as_view({"post": "reject_invite"})
-invite_get_users = InviteGetUsers.as_view({"get": "list"})
-
 leave_blog = LeaveBlogView.as_view({"post": "leave_blog"})
 kick_user = KickUserView.as_view({"post": "kick_user"})
 
@@ -108,7 +97,6 @@ blog_editor_posts = BlogEditorPostsView.as_view({"get": "list"})
 username_blogs_owner = BlogsWhereUserIsOwner.as_view({"get": "list"})
 username_blogs_author = BlogsWhereUserIsAuthor.as_view({"get": "list"})
 
-blog_invitations = BlogInvitationListView.as_view({"get": "list"})
 
 liked_posts = LikedPostListView.as_view({"get": "list"})
 bookmarked_posts = BookmarksListView.as_view({"get": "list"})
@@ -178,7 +166,6 @@ urlpatterns = [
         name="add_or_remove_bookmark",
     ),
     path("blog/<slug:slug>/posts/", blog_posts, name="blog_posts"),
-    path("blog/<slug:slug>/invitations/", blog_invitations, name="blog_invitations"),
     path("post/list/", post_list, name="post_list"),
     path("posts/my/", my_posts, name="my_posts"),
     path("blog/<slug:slug>/post/create/", post_create, name="create_post"),
@@ -228,13 +215,6 @@ urlpatterns = [
         name="liked_user_list",
     ),
     path("blog/<slug:slug>/publications/", blog_publications, name="blog_publications"),
-    path("invite/create/", invite_create, name="invite_create"),
-    path("invite/list/", invite_list, name="invite_list"),
-    path("invite/<int:pk>/accept/", invite_accept, name="accept_invite"),
-    path("invite/<int:pk>/reject/", invite_reject, name="reject_invite"),
-    path(
-        "invite/blog/<slug:slug>/get_users/", invite_get_users, name="invite_get_users"
-    ),
     path("blog_owner/list/", is_blog_owner, name="is_blog_owner"),
     path("blog/<slug:slug>/available/", is_slug_available, name="is_slug_available"),
     path("posts/search/<str:hashtag>/", search, name="search"),

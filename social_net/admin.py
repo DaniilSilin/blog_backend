@@ -5,7 +5,6 @@ from .models import (
     UserProfile,
     Commentary,
     Tag,
-    Invite,
     Notification,
     PostImage,
 )
@@ -43,11 +42,6 @@ class AdminCommentary(admin.ModelAdmin):
     )
 
 
-class AdminInvite(admin.ModelAdmin):
-    model = Invite
-    list_display = ("admin", "pk", "description", "addressee", "blog")
-
-
 class AdminTags(admin.ModelAdmin):
     model = Tag
     list_display = ("name",)
@@ -67,6 +61,5 @@ admin.site.register(Post, AdminPosts)
 admin.site.register(Blog, AdminBlog)
 admin.site.register(Commentary, AdminCommentary)
 admin.site.register(Tag, AdminTags)
-admin.site.register(Invite, AdminInvite)
 admin.site.register(Notification, AdminNotifications)
 admin.site.register(PostImage, AdminPostImages)

@@ -14,7 +14,6 @@ from .models import (
     Commentary,
     UserProfile,
     Tag,
-    Invite,
     Notification,
     PostImage,
 )
@@ -546,33 +545,6 @@ class SubscriptionList(serializers.ModelSerializer):
         fields = ("subscriptions",)
 
 
-class InviteUserSerializer(serializers.ModelSerializer):
-    addressee = serializers.CharField()
-    blog = serializers.CharField()
-
-    class Meta:
-        model = Invite
-        fields = ["admin", "description", "addressee", "blog"]
-
-
-class InviteListUserSerializer(serializers.ModelSerializer):
-    blog = BlogSerializer()
-    admin = UserSerializer()
-    addressee = UserSerializer()
-
-    class Meta:
-        model = Invite
-        fields = [
-            "pk",
-            "admin",
-            "description",
-            "status",
-            "created_at",
-            "addressee",
-            "blog",
-        ]
-
-
 class IsBlogOwnerSerializer(serializers.ModelSerializer):
     value = serializers.CharField(source="slug")
     id = serializers.CharField(source="pk")
@@ -588,14 +560,6 @@ class IsBlogAvailableSerializer(serializers.ModelSerializer):
         fields = [
             "slug",
         ]
-
-
-class InviteGetUsersSerializer(serializers.ModelSerializer):
-    value = serializers.CharField(source="username")
-
-    class Meta:
-        model = UserProfile
-        fields = ("id", "value", "email", "avatar_small")
 
 
 class BookmarkListSerializer(serializers.ModelSerializer):
@@ -718,3 +682,11 @@ class BlogDeletePostListSerializer(serializers.Serializer):
     class Meta:
         model = Post
         fields = ["selectedPosts"]
+
+
+class InviteGetUsersSerializer(serializers.ModelSerializer):
+    value = serializers.CharField(source="username")
+
+    class Meta:
+        model = UserProfile
+        fields = ("id", "value", "email", "avatar_small")
