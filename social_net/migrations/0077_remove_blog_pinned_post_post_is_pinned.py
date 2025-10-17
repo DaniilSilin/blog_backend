@@ -6,17 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0076_alter_post_author_is_hidden'),
+        ("social_net", "0076_alter_post_author_is_hidden"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='blog',
-            name='pinned_post',
+            model_name="blog",
+            name="pinned_post",
         ),
         migrations.AddField(
-            model_name='post',
-            name='is_pinned',
-            field=models.BooleanField(default=False, verbose_name='Закреплён ли'),
+            model_name="post",
+            name="is_pinned",
+            field=models.BooleanField(default=False, verbose_name="Закреплён ли"),
         ),
     ]

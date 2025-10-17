@@ -7,13 +7,17 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0016_alter_post_blog'),
+        ("social_net", "0016_alter_post_blog"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='post',
-            name='blog',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='social_net.blog', to_field='slug'),
+            model_name="post",
+            name="blog",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to="social_net.blog",
+                to_field="slug",
+            ),
         ),
     ]

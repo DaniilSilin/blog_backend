@@ -6,18 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('authentication', '0006_userprofile_bookmarks'),
+        ("authentication", "0006_userprofile_bookmarks"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='userprofile',
-            name='avatar_small',
-            field=models.ImageField(default='icy.jpg', upload_to='users_avatars/small/'),
+            model_name="userprofile",
+            name="avatar_small",
+            field=models.ImageField(
+                default="icy.jpg", upload_to="users_avatars/small/"
+            ),
         ),
         migrations.AlterField(
-            model_name='userprofile',
-            name='avatar',
-            field=models.ImageField(default='icy.jpg', upload_to='users_avatars/original/'),
+            model_name="userprofile",
+            name="avatar",
+            field=models.ImageField(
+                default="icy.jpg", upload_to="users_avatars/original/"
+            ),
         ),
     ]

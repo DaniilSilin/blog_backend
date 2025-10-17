@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0075_post_map_type'),
+        ("social_net", "0075_post_map_type"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='post',
-            name='author_is_hidden',
-            field=models.BooleanField(default=False, verbose_name='Автор скрыт'),
+            model_name="post",
+            name="author_is_hidden",
+            field=models.BooleanField(default=False, verbose_name="Автор скрыт"),
         ),
     ]

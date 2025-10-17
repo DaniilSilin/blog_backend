@@ -8,13 +8,15 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('social_net', '0013_blog_count_of_posts'),
+        ("social_net", "0013_blog_count_of_posts"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='blog',
-            name='authors',
-            field=models.ManyToManyField(related_name='blog_list', to=settings.AUTH_USER_MODEL),
+            model_name="blog",
+            name="authors",
+            field=models.ManyToManyField(
+                related_name="blog_list", to=settings.AUTH_USER_MODEL
+            ),
         ),
     ]

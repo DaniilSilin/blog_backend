@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0045_post_comments_allowed'),
+        ("social_net", "0045_post_comments_allowed"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='post',
-            name='banner',
-            field=models.ImageField(default='banner.jpg', upload_to='blog/'),
+            model_name="post",
+            name="banner",
+            field=models.ImageField(default="banner.jpg", upload_to="blog/"),
         ),
     ]

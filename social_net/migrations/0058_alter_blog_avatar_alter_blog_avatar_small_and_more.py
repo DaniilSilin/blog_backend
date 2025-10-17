@@ -6,28 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0057_blog_banner_small_alter_blog_avatar_and_more'),
+        ("social_net", "0057_blog_banner_small_alter_blog_avatar_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='blog',
-            name='avatar',
-            field=models.ImageField(null=True, upload_to='blog/avatars/original/'),
+            model_name="blog",
+            name="avatar",
+            field=models.ImageField(null=True, upload_to="blog/avatars/original/"),
         ),
         migrations.AlterField(
-            model_name='blog',
-            name='avatar_small',
-            field=models.ImageField(null=True, upload_to='blog/avatars/small/'),
+            model_name="blog",
+            name="avatar_small",
+            field=models.ImageField(null=True, upload_to="blog/avatars/small/"),
         ),
         migrations.AlterField(
-            model_name='blog',
-            name='banner',
-            field=models.ImageField(null=True, upload_to='blog/banners/original/'),
+            model_name="blog",
+            name="banner",
+            field=models.ImageField(null=True, upload_to="blog/banners/original/"),
         ),
         migrations.AlterField(
-            model_name='blog',
-            name='banner_small',
-            field=models.ImageField(null=True, upload_to='blog/banners/small/'),
+            model_name="blog",
+            name="banner_small",
+            field=models.ImageField(null=True, upload_to="blog/banners/small/"),
         ),
     ]

@@ -8,13 +8,15 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('social_net', '0019_alter_commentary_comment_id_alter_tag_name'),
+        ("social_net", "0019_alter_commentary_comment_id_alter_tag_name"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='post',
-            name='liked_users',
-            field=models.ManyToManyField(related_name='alex', to=settings.AUTH_USER_MODEL),
+            model_name="post",
+            name="liked_users",
+            field=models.ManyToManyField(
+                related_name="alex", to=settings.AUTH_USER_MODEL
+            ),
         ),
     ]

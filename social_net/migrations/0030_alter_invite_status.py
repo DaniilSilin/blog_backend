@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0029_invite_admin_invite_blog'),
+        ("social_net", "0029_invite_admin_invite_blog"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='invite',
-            name='status',
-            field=models.BooleanField(null=True, verbose_name='Статус приглашения'),
+            model_name="invite",
+            name="status",
+            field=models.BooleanField(null=True, verbose_name="Статус приглашения"),
         ),
     ]

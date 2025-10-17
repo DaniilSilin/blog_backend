@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0044_post_pinned_comment'),
+        ("social_net", "0044_post_pinned_comment"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='post',
-            name='comments_allowed',
-            field=models.BooleanField(default=True, verbose_name='Разрешены ли комментарии'),
+            model_name="post",
+            name="comments_allowed",
+            field=models.BooleanField(
+                default=True, verbose_name="Разрешены ли комментарии"
+            ),
         ),
     ]

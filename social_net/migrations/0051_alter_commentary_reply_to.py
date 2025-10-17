@@ -7,13 +7,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0050_alter_commentary_reply_to'),
+        ("social_net", "0050_alter_commentary_reply_to"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='commentary',
-            name='reply_to',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='replies', to='social_net.commentary'),
+            model_name="commentary",
+            name="reply_to",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="replies",
+                to="social_net.commentary",
+            ),
         ),
     ]

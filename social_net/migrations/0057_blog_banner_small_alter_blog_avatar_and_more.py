@@ -6,28 +6,38 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0056_alter_invite_blog'),
+        ("social_net", "0056_alter_invite_blog"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='blog',
-            name='banner_small',
-            field=models.ImageField(default='default/small/banner.jpg', upload_to='blog/banners/small/'),
+            model_name="blog",
+            name="banner_small",
+            field=models.ImageField(
+                default="default/small/banner.jpg", upload_to="blog/banners/small/"
+            ),
         ),
         migrations.AlterField(
-            model_name='blog',
-            name='avatar',
-            field=models.ImageField(default='default/original/avatar.jpg', upload_to='blog/avatars/original/'),
+            model_name="blog",
+            name="avatar",
+            field=models.ImageField(
+                default="default/original/avatar.jpg",
+                upload_to="blog/avatars/original/",
+            ),
         ),
         migrations.AlterField(
-            model_name='blog',
-            name='avatar_small',
-            field=models.ImageField(default='default/small/avatar.jpg', upload_to='blog/avatars/small/'),
+            model_name="blog",
+            name="avatar_small",
+            field=models.ImageField(
+                default="default/small/avatar.jpg", upload_to="blog/avatars/small/"
+            ),
         ),
         migrations.AlterField(
-            model_name='blog',
-            name='banner',
-            field=models.ImageField(default='default/original/banner.jpg', upload_to='blog/banners/original/'),
+            model_name="blog",
+            name="banner",
+            field=models.ImageField(
+                default="default/original/banner.jpg",
+                upload_to="blog/banners/original/",
+            ),
         ),
     ]

@@ -6,28 +6,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('authentication', '0011_remove_userprofile_age_alter_userprofile_avatar_and_more'),
+        (
+            "authentication",
+            "0011_remove_userprofile_age_alter_userprofile_avatar_and_more",
+        ),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='userprofile',
-            name='avatar',
-            field=models.ImageField(null=True, upload_to='avatars/profile/original/'),
+            model_name="userprofile",
+            name="avatar",
+            field=models.ImageField(null=True, upload_to="avatars/profile/original/"),
         ),
         migrations.AlterField(
-            model_name='userprofile',
-            name='avatar_small',
-            field=models.ImageField(null=True, upload_to='avatars/profile/small/'),
+            model_name="userprofile",
+            name="avatar_small",
+            field=models.ImageField(null=True, upload_to="avatars/profile/small/"),
         ),
         migrations.AlterField(
-            model_name='userprofile',
-            name='banner',
-            field=models.ImageField(null=True, upload_to='banners/profile/original/'),
+            model_name="userprofile",
+            name="banner",
+            field=models.ImageField(null=True, upload_to="banners/profile/original/"),
         ),
         migrations.AlterField(
-            model_name='userprofile',
-            name='banner_small',
-            field=models.ImageField(null=True, upload_to='banners/profile/small/'),
+            model_name="userprofile",
+            name="banner_small",
+            field=models.ImageField(null=True, upload_to="banners/profile/small/"),
         ),
     ]

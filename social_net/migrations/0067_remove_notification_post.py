@@ -6,12 +6,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0066_notification_post'),
+        ("social_net", "0066_notification_post"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='notification',
-            name='post',
+            model_name="notification",
+            name="post",
         ),
     ]

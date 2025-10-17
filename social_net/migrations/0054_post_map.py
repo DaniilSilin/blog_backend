@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0053_blog_map'),
+        ("social_net", "0053_blog_map"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='post',
-            name='map',
-            field=models.TextField(blank=True, verbose_name='Ссылка на карту'),
+            model_name="post",
+            name="map",
+            field=models.TextField(blank=True, verbose_name="Ссылка на карту"),
         ),
     ]

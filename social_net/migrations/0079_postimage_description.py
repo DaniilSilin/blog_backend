@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0078_postimage'),
+        ("social_net", "0078_postimage"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='postimage',
-            name='description',
-            field=models.TextField(blank=True, null=True, verbose_name='Описание'),
+            model_name="postimage",
+            name="description",
+            field=models.TextField(blank=True, null=True, verbose_name="Описание"),
         ),
     ]

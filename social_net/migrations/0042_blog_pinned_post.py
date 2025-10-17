@@ -7,14 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0041_remove_blog_pinned_post'),
+        ("social_net", "0041_remove_blog_pinned_post"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='blog',
-            name='pinned_post',
-            field=models.ForeignKey(blank=True, default=1, on_delete=django.db.models.deletion.CASCADE, related_name='pinned_blogs', to='social_net.post'),
+            model_name="blog",
+            name="pinned_post",
+            field=models.ForeignKey(
+                blank=True,
+                default=1,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="pinned_blogs",
+                to="social_net.post",
+            ),
             preserve_default=False,
         ),
     ]

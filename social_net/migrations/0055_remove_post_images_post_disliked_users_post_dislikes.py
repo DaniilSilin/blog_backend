@@ -7,23 +7,25 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0054_post_map'),
+        ("social_net", "0054_post_map"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='post',
-            name='images',
+            model_name="post",
+            name="images",
         ),
         migrations.AddField(
-            model_name='post',
-            name='disliked_users',
-            field=models.ManyToManyField(blank=True, related_name='disliked', to=settings.AUTH_USER_MODEL),
+            model_name="post",
+            name="disliked_users",
+            field=models.ManyToManyField(
+                blank=True, related_name="disliked", to=settings.AUTH_USER_MODEL
+            ),
         ),
         migrations.AddField(
-            model_name='post',
-            name='dislikes',
-            field=models.IntegerField(default=0, verbose_name='Счётчик дизлайков'),
+            model_name="post",
+            name="dislikes",
+            field=models.IntegerField(default=0, verbose_name="Счётчик дизлайков"),
         ),
     ]

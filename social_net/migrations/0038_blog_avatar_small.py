@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0037_blog_dzen_link_blog_email_blog_ok_link_and_more'),
+        ("social_net", "0037_blog_dzen_link_blog_email_blog_ok_link_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='blog',
-            name='avatar_small',
-            field=models.ImageField(default='icy_small.png', upload_to='blog_avatars_small/'),
+            model_name="blog",
+            name="avatar_small",
+            field=models.ImageField(
+                default="icy_small.png", upload_to="blog_avatars_small/"
+            ),
         ),
     ]

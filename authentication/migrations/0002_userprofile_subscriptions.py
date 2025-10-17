@@ -6,14 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0019_alter_commentary_comment_id_alter_tag_name'),
-        ('authentication', '0001_initial'),
+        ("social_net", "0019_alter_commentary_comment_id_alter_tag_name"),
+        ("authentication", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='userprofile',
-            name='subscriptions',
-            field=models.ManyToManyField(related_name='subscribers', to='social_net.blog'),
+            model_name="userprofile",
+            name="subscriptions",
+            field=models.ManyToManyField(
+                related_name="subscribers", to="social_net.blog"
+            ),
         ),
     ]

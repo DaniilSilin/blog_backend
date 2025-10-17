@@ -14,11 +14,11 @@ from channels.auth import AuthMiddlewareStack
 
 from social_net.routing import ws_urlpatterns
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mediasoft_django_hard.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mediasoft_django_hard.settings")
 
-application = ProtocolTypeRouter({
-    "http": get_asgi_application(),
-    "websocket": AuthMiddlewareStack(
-        URLRouter(ws_urlpatterns)
-    ),
-})
+application = ProtocolTypeRouter(
+    {
+        "http": get_asgi_application(),
+        "websocket": AuthMiddlewareStack(URLRouter(ws_urlpatterns)),
+    }
+)

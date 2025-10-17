@@ -8,14 +8,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0071_rename_pinned_comment_commentary_is_pinned'),
+        ("social_net", "0071_rename_pinned_comment_commentary_is_pinned"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='commentary',
-            name='pinned_by_user',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='pinned_commentaries', to=settings.AUTH_USER_MODEL),
+            model_name="commentary",
+            name="pinned_by_user",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="pinned_commentaries",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

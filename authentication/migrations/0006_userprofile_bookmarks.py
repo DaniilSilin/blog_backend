@@ -6,14 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('authentication', '0005_alter_userprofile_avatar'),
-        ('social_net', '0039_commentary_reply_to'),
+        ("authentication", "0005_alter_userprofile_avatar"),
+        ("social_net", "0039_commentary_reply_to"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='userprofile',
-            name='bookmarks',
-            field=models.ManyToManyField(blank=True, related_name='bookmarks', to='social_net.post'),
+            model_name="userprofile",
+            name="bookmarks",
+            field=models.ManyToManyField(
+                blank=True, related_name="bookmarks", to="social_net.post"
+            ),
         ),
     ]

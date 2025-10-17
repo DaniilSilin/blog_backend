@@ -6,13 +6,13 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0070_remove_post_pinned_comment_commentary_pinned_comment'),
+        ("social_net", "0070_remove_post_pinned_comment_commentary_pinned_comment"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='commentary',
-            old_name='pinned_comment',
-            new_name='is_pinned',
+            model_name="commentary",
+            old_name="pinned_comment",
+            new_name="is_pinned",
         ),
     ]

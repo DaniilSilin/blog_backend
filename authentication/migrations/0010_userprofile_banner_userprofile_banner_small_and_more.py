@@ -6,28 +6,39 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('authentication', '0009_userprofile_age'),
+        ("authentication", "0009_userprofile_age"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='userprofile',
-            name='banner',
-            field=models.ImageField(default='default/original/banner.jpg', upload_to='banners/profile/original/'),
+            model_name="userprofile",
+            name="banner",
+            field=models.ImageField(
+                default="default/original/banner.jpg",
+                upload_to="banners/profile/original/",
+            ),
         ),
         migrations.AddField(
-            model_name='userprofile',
-            name='banner_small',
-            field=models.ImageField(default='default/small/banner.jpg', upload_to='banners/profile/small/'),
+            model_name="userprofile",
+            name="banner_small",
+            field=models.ImageField(
+                default="default/small/banner.jpg", upload_to="banners/profile/small/"
+            ),
         ),
         migrations.AlterField(
-            model_name='userprofile',
-            name='avatar',
-            field=models.ImageField(default='default/original/avatar.jpg', upload_to='avatars/profile/original/'),
+            model_name="userprofile",
+            name="avatar",
+            field=models.ImageField(
+                default="default/original/avatar.jpg",
+                upload_to="avatars/profile/original/",
+            ),
         ),
         migrations.AlterField(
-            model_name='userprofile',
-            name='avatar_small',
-            field=models.ImageField(default='default/original/avatar.jpg', upload_to='avatars/profile/small/'),
+            model_name="userprofile",
+            name="avatar_small",
+            field=models.ImageField(
+                default="default/original/avatar.jpg",
+                upload_to="avatars/profile/small/",
+            ),
         ),
     ]

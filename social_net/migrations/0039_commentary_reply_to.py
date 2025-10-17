@@ -7,13 +7,18 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0038_blog_avatar_small'),
+        ("social_net", "0038_blog_avatar_small"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='commentary',
-            name='reply_to',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='replies', to='social_net.commentary'),
+            model_name="commentary",
+            name="reply_to",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="replies",
+                to="social_net.commentary",
+            ),
         ),
     ]

@@ -6,17 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0046_post_banner'),
+        ("social_net", "0046_post_banner"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='post',
-            name='banner',
+            model_name="post",
+            name="banner",
         ),
         migrations.AddField(
-            model_name='blog',
-            name='banner',
-            field=models.ImageField(default='banner.jpg', upload_to='blog/'),
+            model_name="blog",
+            name="banner",
+            field=models.ImageField(default="banner.jpg", upload_to="blog/"),
         ),
     ]

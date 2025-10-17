@@ -6,19 +6,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0024_alter_blog_authors'),
-        ('authentication', '0002_userprofile_subscriptions'),
+        ("social_net", "0024_alter_blog_authors"),
+        ("authentication", "0002_userprofile_subscriptions"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='userprofile',
-            name='is_admin',
+            model_name="userprofile",
+            name="is_admin",
             field=models.BooleanField(default=False),
         ),
         migrations.AlterField(
-            model_name='userprofile',
-            name='subscriptions',
-            field=models.ManyToManyField(blank=True, related_name='subscribers', to='social_net.blog'),
+            model_name="userprofile",
+            name="subscriptions",
+            field=models.ManyToManyField(
+                blank=True, related_name="subscribers", to="social_net.blog"
+            ),
         ),
     ]

@@ -6,17 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0069_notification_is_hidden_alter_notification_post'),
+        ("social_net", "0069_notification_is_hidden_alter_notification_post"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='post',
-            name='pinned_comment',
+            model_name="post",
+            name="pinned_comment",
         ),
         migrations.AddField(
-            model_name='commentary',
-            name='pinned_comment',
+            model_name="commentary",
+            name="pinned_comment",
             field=models.BooleanField(default=False),
         ),
     ]

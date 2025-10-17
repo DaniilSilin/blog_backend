@@ -15,56 +15,133 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Blog',
+            name="Blog",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=255, verbose_name='Заголовок')),
-                ('description', models.TextField(verbose_name='Тематика')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Дата последнего обновления')),
-                ('authors', models.ManyToManyField(to=settings.AUTH_USER_MODEL)),
-                ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='blogs', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=255, verbose_name="Заголовок")),
+                ("description", models.TextField(verbose_name="Тематика")),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Дата создания"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Дата последнего обновления"
+                    ),
+                ),
+                ("authors", models.ManyToManyField(to=settings.AUTH_USER_MODEL)),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="blogs",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='Tag',
+            name="Tag",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255, verbose_name='Имя')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255, verbose_name="Имя")),
             ],
         ),
         migrations.CreateModel(
-            name='Post',
+            name="Post",
             fields=[
-                ('id', models.IntegerField(primary_key=True, serialize=False)),
-                ('title', models.CharField(max_length=255, verbose_name='Заголовок')),
-                ('body', models.TextField(verbose_name='Тело поста')),
-                ('is_published', models.BooleanField(default=False, verbose_name='Опубликован ли')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Дата публикации')),
-                ('likes', models.IntegerField(default=0, verbose_name='Счётчик оценок')),
-                ('views', models.IntegerField(default=0, verbose_name='Счётчик просмотров')),
-                ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
-                ('blog', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='social_net.blog')),
-                ('tags', models.ManyToManyField(blank=True, to='social_net.tag')),
+                ("id", models.IntegerField(primary_key=True, serialize=False)),
+                ("title", models.CharField(max_length=255, verbose_name="Заголовок")),
+                ("body", models.TextField(verbose_name="Тело поста")),
+                (
+                    "is_published",
+                    models.BooleanField(default=False, verbose_name="Опубликован ли"),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Дата публикации"
+                    ),
+                ),
+                (
+                    "likes",
+                    models.IntegerField(default=0, verbose_name="Счётчик оценок"),
+                ),
+                (
+                    "views",
+                    models.IntegerField(default=0, verbose_name="Счётчик просмотров"),
+                ),
+                (
+                    "author",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "blog",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="social_net.blog",
+                    ),
+                ),
+                ("tags", models.ManyToManyField(blank=True, to="social_net.tag")),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='Commentary',
+            name="Commentary",
             fields=[
-                ('id', models.IntegerField(primary_key=True, serialize=False)),
-                ('body', models.TextField(verbose_name='Тело комментария')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')),
-                ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='commentaries', to=settings.AUTH_USER_MODEL)),
-                ('post', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='social_net.post')),
+                ("id", models.IntegerField(primary_key=True, serialize=False)),
+                ("body", models.TextField(verbose_name="Тело комментария")),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Дата создания"
+                    ),
+                ),
+                (
+                    "author",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="commentaries",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "post",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="social_net.post",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
     ]

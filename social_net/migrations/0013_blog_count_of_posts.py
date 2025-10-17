@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0012_post_tags'),
+        ("social_net", "0012_post_tags"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='blog',
-            name='count_of_posts',
-            field=models.PositiveIntegerField(default=0, verbose_name='Кол-во постов блога'),
+            model_name="blog",
+            name="count_of_posts",
+            field=models.PositiveIntegerField(
+                default=0, verbose_name="Кол-во постов блога"
+            ),
         ),
     ]

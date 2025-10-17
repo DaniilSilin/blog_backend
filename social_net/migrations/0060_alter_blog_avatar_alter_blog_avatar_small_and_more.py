@@ -6,28 +6,36 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0059_alter_blog_description'),
+        ("social_net", "0059_alter_blog_description"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='blog',
-            name='avatar',
-            field=models.ImageField(blank=True, null=True, upload_to='blog/avatars/original/'),
+            model_name="blog",
+            name="avatar",
+            field=models.ImageField(
+                blank=True, null=True, upload_to="blog/avatars/original/"
+            ),
         ),
         migrations.AlterField(
-            model_name='blog',
-            name='avatar_small',
-            field=models.ImageField(blank=True, null=True, upload_to='blog/avatars/small/'),
+            model_name="blog",
+            name="avatar_small",
+            field=models.ImageField(
+                blank=True, null=True, upload_to="blog/avatars/small/"
+            ),
         ),
         migrations.AlterField(
-            model_name='blog',
-            name='banner',
-            field=models.ImageField(blank=True, null=True, upload_to='blog/banners/original/'),
+            model_name="blog",
+            name="banner",
+            field=models.ImageField(
+                blank=True, null=True, upload_to="blog/banners/original/"
+            ),
         ),
         migrations.AlterField(
-            model_name='blog',
-            name='banner_small',
-            field=models.ImageField(blank=True, null=True, upload_to='blog/banners/small/'),
+            model_name="blog",
+            name="banner_small",
+            field=models.ImageField(
+                blank=True, null=True, upload_to="blog/banners/small/"
+            ),
         ),
     ]

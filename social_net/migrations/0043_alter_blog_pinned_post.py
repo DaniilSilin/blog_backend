@@ -7,13 +7,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0042_blog_pinned_post'),
+        ("social_net", "0042_blog_pinned_post"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='blog',
-            name='pinned_post',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='pinned_blogs', to='social_net.post'),
+            model_name="blog",
+            name="pinned_post",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="pinned_blogs",
+                to="social_net.post",
+            ),
         ),
     ]

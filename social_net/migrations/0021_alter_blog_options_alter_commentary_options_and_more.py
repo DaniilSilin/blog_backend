@@ -8,35 +8,39 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('social_net', '0020_post_liked_users'),
+        ("social_net", "0020_post_liked_users"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='blog',
+            name="blog",
             options={},
         ),
         migrations.AlterModelOptions(
-            name='commentary',
+            name="commentary",
             options={},
         ),
         migrations.AlterModelOptions(
-            name='post',
+            name="post",
             options={},
         ),
         migrations.AlterField(
-            model_name='post',
-            name='created_at',
-            field=models.DateTimeField(blank=True, null=True, verbose_name='Дата публикации'),
+            model_name="post",
+            name="created_at",
+            field=models.DateTimeField(
+                blank=True, null=True, verbose_name="Дата публикации"
+            ),
         ),
         migrations.AlterField(
-            model_name='post',
-            name='liked_users',
-            field=models.ManyToManyField(blank=True, related_name='alex', to=settings.AUTH_USER_MODEL),
+            model_name="post",
+            name="liked_users",
+            field=models.ManyToManyField(
+                blank=True, related_name="alex", to=settings.AUTH_USER_MODEL
+            ),
         ),
         migrations.AlterField(
-            model_name='post',
-            name='tags',
-            field=models.ManyToManyField(blank=True, to='social_net.tag'),
+            model_name="post",
+            name="tags",
+            field=models.ManyToManyField(blank=True, to="social_net.tag"),
         ),
     ]

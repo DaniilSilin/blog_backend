@@ -6,18 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0025_alter_post_blog'),
+        ("social_net", "0025_alter_post_blog"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='blog',
-            name='updated_at',
-            field=models.DateTimeField(auto_now_add=True, verbose_name='Дата последнего обновления'),
+            model_name="blog",
+            name="updated_at",
+            field=models.DateTimeField(
+                auto_now_add=True, verbose_name="Дата последнего обновления"
+            ),
         ),
         migrations.AlterField(
-            model_name='tag',
-            name='name',
-            field=models.CharField(blank=True, max_length=255, unique=True, verbose_name='Имя'),
+            model_name="tag",
+            name="name",
+            field=models.CharField(
+                blank=True, max_length=255, unique=True, verbose_name="Имя"
+            ),
         ),
     ]

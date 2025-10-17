@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0035_commentary_disliked_users_commentary_dislikes_and_more'),
+        ("social_net", "0035_commentary_disliked_users_commentary_dislikes_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='commentary',
-            name='dislikes',
-            field=models.PositiveIntegerField(default=0, verbose_name='Дизлайки'),
+            model_name="commentary",
+            name="dislikes",
+            field=models.PositiveIntegerField(default=0, verbose_name="Дизлайки"),
         ),
         migrations.AlterField(
-            model_name='commentary',
-            name='likes',
-            field=models.PositiveIntegerField(default=0, verbose_name='Лайки'),
+            model_name="commentary",
+            name="likes",
+            field=models.PositiveIntegerField(default=0, verbose_name="Лайки"),
         ),
     ]

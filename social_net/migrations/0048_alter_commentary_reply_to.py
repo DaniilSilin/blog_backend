@@ -7,13 +7,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0047_remove_post_banner_blog_banner'),
+        ("social_net", "0047_remove_post_banner_blog_banner"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='commentary',
-            name='reply_to',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='replies', to='social_net.commentary'),
+            model_name="commentary",
+            name="reply_to",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="replies",
+                to="social_net.commentary",
+            ),
         ),
     ]

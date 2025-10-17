@@ -12,7 +12,12 @@ import sys
 import json
 
 from .models import UserProfile
-from .serializers import LoginSerializer, RegisterSerializer, LogoutSerializer, UserSerializer
+from .serializers import (
+    LoginSerializer,
+    RegisterSerializer,
+    LogoutSerializer,
+    UserSerializer,
+)
 
 
 from dotenv import dotenv_values, load_dotenv
@@ -33,13 +38,15 @@ class LoginView(APIView):
     def post(self, request):
 
         # Your authentication logic here
-        user = authenticate(username=request.data['username'], password=request.data['password'])
+        user = authenticate(
+            username=request.data["username"], password=request.data["password"]
+        )
 
         if user:
             token, created = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key})
+            return Response({"token": token.key})
         else:
-            return Response({'error': 'Invalid credentials'}, status=401)
+            return Response({"error": "Invalid credentials"}, status=401)
 
 
 class RegisterView(viewsets.ModelViewSet):
@@ -49,12 +56,12 @@ class RegisterView(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        first_name = serializer.data['first_name']
-        last_name = serializer.data['last_name']
-        email = serializer.data['email']
-        username = serializer.data['username']
-        password = serializer.data['password']
-        token = serializer.data['token']
+        first_name = serializer.data["first_name"]
+        last_name = serializer.data["last_name"]
+        email = serializer.data["email"]
+        username = serializer.data["username"]
+        password = serializer.data["password"]
+        token = serializer.data["token"]
 
         if self.check_captcha(token):
             user = UserProfile(
@@ -62,13 +69,15 @@ class RegisterView(viewsets.ModelViewSet):
                 last_name=last_name,
                 email=email,
                 username=username,
-                is_admin=False
+                is_admin=False,
             )
             user.set_password(password)
             user.save()
-            return Response({'status': 'successful'}, status=status.HTTP_200_OK)
+            return Response({"status": "successful"}, status=status.HTTP_200_OK)
         else:
-            return Response({'status': 'unsuccessful'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"status": "unsuccessful"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def check_captcha(self, token):
         SMARTCAPTCHA_SERVER_KEY = os.getenv("SMARTCAPTCHA_SERVER_KEY")
@@ -78,12 +87,14 @@ class RegisterView(viewsets.ModelViewSet):
                 "secret": SMARTCAPTCHA_SERVER_KEY,
                 "token": token,
             },
-            timeout=1
+            timeout=1,
         )
         server_output = resp.content.decode()
         if resp.status_code != 200:
-            print(f"Allow access due to an error: code={resp.status_code}; message={server_output}",
-                  file=sys.stderr)
+            print(
+                f"Allow access due to an error: code={resp.status_code}; message={server_output}",
+                file=sys.stderr,
+            )
             return True
         return json.loads(server_output)["status"] == "ok"
 
@@ -112,9 +123,10 @@ class IsUsernameAvailable(viewsets.ModelViewSet):
     def is_username_available(self, request, username):
         username_exists = self.queryset.filter(username=username).exists()
         if username_exists:
-            return Response({'available': False}, status=status.HTTP_200_OK)
+            return Response({"available": False}, status=status.HTTP_200_OK)
         else:
-            return Response({'available': True}, status=status.HTTP_200_OK)
+            return Response({"available": True}, status=status.HTTP_200_OK)
+
 
 class IsEmailAvailable(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
@@ -123,7 +135,12 @@ class IsEmailAvailable(viewsets.ModelViewSet):
     def is_email_available(self, request, email):
         email_exists = self.queryset.filter(email=email).exists()
         if email_exists:
-            return Response({'available': False, 'message': 'Email already exists.'},
-                            status=status.HTTP_200_OK)
+            return Response(
+                {"available": False, "message": "Email already exists."},
+                status=status.HTTP_200_OK,
+            )
         else:
-            return Response({'available': True, 'message': 'Email is available.'}, status=status.HTTP_200_OK)
+            return Response(
+                {"available": True, "message": "Email is available."},
+                status=status.HTTP_200_OK,
+            )

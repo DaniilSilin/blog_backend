@@ -7,20 +7,30 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0073_invite_replied_at_post_author_is_hidden'),
+        ("social_net", "0073_invite_replied_at_post_author_is_hidden"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='notification',
-            name='parent_comment',
-            field=models.ForeignKey(default=0, on_delete=django.db.models.deletion.CASCADE, related_name='parent_comment', to='social_net.commentary'),
+            model_name="notification",
+            name="parent_comment",
+            field=models.ForeignKey(
+                default=0,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="parent_comment",
+                to="social_net.commentary",
+            ),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='notification',
-            name='replied_comment',
-            field=models.ForeignKey(default=0, on_delete=django.db.models.deletion.CASCADE, related_name='replied_comment', to='social_net.commentary'),
+            model_name="notification",
+            name="replied_comment",
+            field=models.ForeignKey(
+                default=0,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="replied_comment",
+                to="social_net.commentary",
+            ),
             preserve_default=False,
         ),
     ]

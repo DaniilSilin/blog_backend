@@ -7,13 +7,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0055_remove_post_images_post_disliked_users_post_dislikes'),
+        ("social_net", "0055_remove_post_images_post_disliked_users_post_dislikes"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='invite',
-            name='blog',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='invites', to='social_net.blog'),
+            model_name="invite",
+            name="blog",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="invites",
+                to="social_net.blog",
+            ),
         ),
     ]

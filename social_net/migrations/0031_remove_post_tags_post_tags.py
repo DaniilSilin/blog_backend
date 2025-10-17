@@ -6,17 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0030_alter_invite_status'),
+        ("social_net", "0030_alter_invite_status"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='post',
-            name='tags',
+            model_name="post",
+            name="tags",
         ),
         migrations.AddField(
-            model_name='post',
-            name='tags',
-            field=models.TextField(null=True, verbose_name='Тэги'),
+            model_name="post",
+            name="tags",
+            field=models.TextField(null=True, verbose_name="Тэги"),
         ),
     ]

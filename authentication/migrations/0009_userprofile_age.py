@@ -6,13 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('authentication', '0008_userprofile_date_of_birth_userprofile_description_and_more'),
+        (
+            "authentication",
+            "0008_userprofile_date_of_birth_userprofile_description_and_more",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='userprofile',
-            name='age',
-            field=models.PositiveIntegerField(null=True, verbose_name='Возраст'),
+            model_name="userprofile",
+            name="age",
+            field=models.PositiveIntegerField(null=True, verbose_name="Возраст"),
         ),
     ]

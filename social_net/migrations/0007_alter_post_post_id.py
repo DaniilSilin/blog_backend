@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('social_net', '0006_alter_post_post_id'),
+        ("social_net", "0006_alter_post_post_id"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='post',
-            name='post_id',
-            field=models.PositiveIntegerField(verbose_name='ID поста'),
+            model_name="post",
+            name="post_id",
+            field=models.PositiveIntegerField(verbose_name="ID поста"),
         ),
     ]
