@@ -20,7 +20,8 @@ from rest_framework.parsers import MultiPartParser, FormParser
 import re
 
 from authentication.models import UserProfile
-from .models import Blog, Post, Commentary, Notification, PostImage
+from .models import Blog, Post, Commentary, PostImage
+from notifications.models import Notification
 from .serializers import (
     BlogSerializer,
     CreateBlogSerializer,
@@ -28,7 +29,6 @@ from .serializers import (
     PostSerializer,
     CreatePostSerializer,
     CreateCommentarySerializer,
-    SubscriptionList,
     UpdatePostSerializer,
     UserProfileSerializer,
     BlogCommentListSerializer,
@@ -38,12 +38,9 @@ from .serializers import (
     BookmarkListSerializer,
     BookmarkSerializer,
     UserSerializer,
-    ChangeAvatarSerializer,
     SubscriptionListMiniSerializer,
     BlogMiniListSerializer,
     BlogCommentListDeleteSerializer,
-    UpdateUserProfileSerializer,
-    UserNotificationsSerializer,
     PostCommentarySerializer,
     BlogDeletePostListSerializer,
     UpdateCommentarySerializer,
@@ -174,7 +171,7 @@ class BlogList(viewsets.ModelViewSet):
     queryset = Blog.objects.all().order_by("-updated_at")
     serializer_class = BlogMiniListSerializer
     pagination_class = ListSetPagination
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
 
     def list(self, request, *args, **kwargs):
         queryset = self.queryset
@@ -249,7 +246,6 @@ class BlogPage(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = CreateBlogSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        print(serializer.data)
         title = serializer.data["title"]
         slug = serializer.data["slug"]
         description = serializer.validated_data.get("description", "")
@@ -370,7 +366,7 @@ class MyPosts(viewsets.ModelViewSet):
     queryset = Post.objects.all().order_by("-created_at")
     serializer_class = PostSerializer
     pagination_class = ListSetPagination
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def list(self, request, *args, **kwargs):
         queryset = self.queryset.filter(author=request.user)
@@ -397,7 +393,7 @@ class BlogPosts(viewsets.ModelViewSet):
     queryset = Post.objects.filter().order_by("-created_at")
     serializer_class = PostSerializer
     pagination_class = ListSetPagination
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
 
     def list(self, request, *args, **kwargs):
         queryset = self.queryset
@@ -532,7 +528,6 @@ class PostPage(viewsets.ModelViewSet):
             post_id=post_id,
             tags=tags,
         )
-        print(post)
         post.save()
 
         for image in images:
@@ -555,20 +550,6 @@ class BlogSubscription(viewsets.ModelViewSet):
         else:
             user.subscriptions.add(blog)
             return Response({"status": "successful"}, status=status.HTTP_200_OK)
-
-
-class SubscriptionListViewSet(viewsets.ModelViewSet):
-    queryset = UserProfile.objects.all()
-    serializer_class = SubscriptionList
-    # pagination_class = ListSetPagination
-    permission_classes = [permissions.AllowAny]
-
-    def list(self, request, *args, **kwargs):
-        user = get_object_or_404(UserProfile, username=self.kwargs["username"])
-        queryset = self.queryset.filter(username=user)
-        if user:
-            result = SubscriptionList(queryset, many=True)
-            return Response(result.data, status=status.HTTP_200_OK)
 
 
 class PostLikeDislikeViewSet(viewsets.ModelViewSet):
@@ -653,38 +634,38 @@ class IsSlugAvailable(viewsets.ModelViewSet):
             return Response({"available": True}, status=status.HTTP_200_OK)
 
 
-class UserProfileView(viewsets.ModelViewSet):
-    queryset = UserProfile.objects.all()
-
-    def get_serializer_class(self):
-        if self.request.method == "POST":
-            return UpdateUserProfileSerializer
-        if self.request.method == "PUT":
-            return UpdateUserProfileSerializer
-        return UpdateUserProfileSerializer
-
-    def retrieve(self, request, *args, **kwargs):
-        try:
-            user = self.queryset.get(username=self.kwargs["username"])
-            user.subscriptionList = user.subscriptions.count()
-            serial = UpdateUserProfileSerializer(user)
-            return Response(serial.data)
-        except UserProfile.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-    def update(self, request, *args, **kwargs):
-        user = get_object_or_404(UserProfile, username=self.kwargs["username"])
-        serializer = UpdateUserProfileSerializer(
-            instance=user, data=request.data, partial=True
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({"status": "successful"}, status=status.HTTP_200_OK)
-
-    def destroy(self, request, *args, **kwargs):
-        user = get_object_or_404(UserProfile, username=self.kwargs["username"])
-        user.delete()
-        return Response({"status: successful"}, status=status.HTTP_200_OK)
+# class UserProfileView(viewsets.ModelViewSet):
+#     queryset = UserProfile.objects.all()
+#
+#     def get_serializer_class(self):
+#         if self.request.method == "POST":
+#             return UpdateUserProfileSerializer
+#         if self.request.method == "PUT":
+#             return UpdateUserProfileSerializer
+#         return UpdateUserProfileSerializer
+#
+#     def retrieve(self, request, *args, **kwargs):
+#         try:
+#             user = self.queryset.get(username=self.kwargs["username"])
+#             user.subscriptionList = user.subscriptions.count()
+#             serial = UpdateUserProfileSerializer(user)
+#             return Response(serial.data)
+#         except UserProfile.DoesNotExist:
+#             return Response(status=status.HTTP_404_NOT_FOUND)
+#
+#     def update(self, request, *args, **kwargs):
+#         user = get_object_or_404(UserProfile, username=self.kwargs["username"])
+#         serializer = UpdateUserProfileSerializer(
+#             instance=user, data=request.data, partial=True
+#         )
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save()
+#         return Response({"status": "successful"}, status=status.HTTP_200_OK)
+#
+#     def destroy(self, request, *args, **kwargs):
+#         user = get_object_or_404(UserProfile, username=self.kwargs["username"])
+#         user.delete()
+#         return Response({"status: successful"}, status=status.HTTP_200_OK)
 
 
 class PostSearchView(viewsets.ModelViewSet):
@@ -899,9 +880,7 @@ class CommentaryPage(viewsets.ModelViewSet):
         comment_id = blog.count_of_commentaries
 
         if reply_to:
-            print(reply_to)
             commentary = get_object_or_404(Commentary, comment_id=reply_to, post=post)
-            # print(commentary)
             comm = Commentary(
                 body=body,
                 author=request.user,
@@ -923,7 +902,6 @@ class CommentaryPage(viewsets.ModelViewSet):
         new_addressees = " ".join(addressees).split("@")
 
         for addressee in new_addressees:
-            print(addressee)
             message = f'Пользователь {addressee} оставил комментарий "{body}"'
             if UserProfile.objects.filter(username=addressee).exists():
                 user = UserProfile.objects.get(username=addressee)
@@ -1049,15 +1027,15 @@ class PostCommentListView(viewsets.ModelViewSet):
 
         if request.user.is_authenticated:
             queryset = queryset.annotate(
-                isLiked=Case(
-                    When(liked_users=request.user, then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField(),
+                isLiked=Exists(
+                    Commentary.objects.filter(
+                        liked_users=request.user, id=OuterRef("pk")
+                    )
                 ),
-                isDisliked=Case(
-                    When(disliked_users=request.user, then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField(),
+                isDisliked=Exists(
+                    Commentary.objects.filter(
+                        disliked_users=request.user, id=OuterRef("pk")
+                    )
                 ),
             )
         else:
@@ -1070,28 +1048,6 @@ class PostCommentListView(viewsets.ModelViewSet):
         serializer = self.serializer_class(paginate_queryset, many=True)
         response = self.get_paginated_response(serializer.data)
         return Response(data=response.data, status=status.HTTP_200_OK)
-
-
-class ChangeAvatarView(viewsets.ModelViewSet):
-    queryset = UserProfile.objects.all()
-    serializer_class = ChangeAvatarSerializer
-    parser_class = (MultiPartParser, FormParser)
-
-    def update(self, request, *args, **kwargs):
-        user = get_object_or_404(UserProfile, username=self.kwargs["username"])
-        serializer = ChangeAvatarSerializer(
-            instance=user, data=request.data, partial=True
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({"status": "success"}, status=status.HTTP_200_OK)
-
-
-class DeleteAvatarView(viewsets.ModelViewSet):
-    queryset = UserProfile.objects.all()
-
-    # def destroy(self, request, *args, **kwargs):
-    #     user = get_object_or_404(UserProfile, username=self.kwargs['username'])
 
 
 class BlogEditorPostsView(viewsets.ModelViewSet):
@@ -1533,56 +1489,6 @@ class SetCommentLikeByAuthorView(viewsets.ModelViewSet):
             comment.liked_by_author = False
             comment.save(update_fields=("liked_by_author",))
             return Response({"status": "successful"}, status=status.HTTP_200_OK)
-
-
-class UserNotificationListView(viewsets.ModelViewSet):
-    queryset = Notification.objects.filter(is_hidden=False)
-    permission_classes = [IsAuthenticated]
-    serializer_class = UserNotificationsSerializer
-    pagination_class = ListSetPagination
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.queryset.filter(addressee=request.user)
-
-        paginate_queryset = self.paginate_queryset(queryset)
-        if paginate_queryset:
-            serializer = self.serializer_class(paginate_queryset, many=True)
-            result = self.get_paginated_response(serializer.data)
-            return Response(data=result.data, status=status.HTTP_200_OK)
-        else:
-            return Response(
-                {"status": "unsuccessful"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-
-class SetNotificationIsRead(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
-
-    def read_notification(self, request, pk):
-        notification = get_object_or_404(Notification, pk=pk)
-        if not notification.is_read:
-            notification.is_read = True
-            notification.save(update_fields=("is_read",))
-            return Response({"status": "successful"}, status=status.HTTP_200_OK)
-        else:
-            return Response(
-                {"status": "unsuccessful"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-
-class HideNotificationView(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
-
-    def hide_notification(self, request, pk):
-        notification = get_object_or_404(Notification, pk=pk)
-        if not notification.is_hidden:
-            notification.is_hidden = True
-            notification.save(update_fields=("is_hidden",))
-            return Response({"status": "successful"}, status=status.HTTP_200_OK)
-        else:
-            return Response(
-                {"status": "unsuccessful"}, status=status.HTTP_404_NOT_FOUND
-            )
 
 
 class BlogDeletePostsView(viewsets.ModelViewSet):

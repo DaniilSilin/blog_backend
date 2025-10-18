@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "authentication.apps.AuthenticationConfig",
     "social_net.apps.SocialNetConfig",
     "invites.apps.InvitesConfig",
+    "notifications.apps.NotificationsConfig",
     "corsheaders",
 ]
 

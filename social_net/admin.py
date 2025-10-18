@@ -5,7 +5,6 @@ from .models import (
     UserProfile,
     Commentary,
     Tag,
-    Notification,
     PostImage,
 )
 
@@ -47,13 +46,8 @@ class AdminTags(admin.ModelAdmin):
     list_display = ("name",)
 
 
-class AdminNotifications(admin.ModelAdmin):
-    model = Notification
-    list_display = ("addressee", "author", "created_at", "is_read")
-
-
 class AdminPostImages(admin.ModelAdmin):
-    model = Notification
+    model = PostImage
     list_display = ("id", "image")
 
 
@@ -61,5 +55,4 @@ admin.site.register(Post, AdminPosts)
 admin.site.register(Blog, AdminBlog)
 admin.site.register(Commentary, AdminCommentary)
 admin.site.register(Tag, AdminTags)
-admin.site.register(Notification, AdminNotifications)
 admin.site.register(PostImage, AdminPostImages)

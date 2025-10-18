@@ -9,21 +9,17 @@ from .viewsets import (
     CommentaryPage,
     BlogSubscription,
     BookmarksListView,
-    SubscriptionListViewSet,
     PostLikeDislikeViewSet,
     LeaveBlogView,
     KickUserView,
     PinPostViewSet,
     IsBlogOwner,
     IsSlugAvailable,
-    UserProfileView,
     PostSearchView,
     PostCommentListView,
     BookmarkView,
     PinCommentViewSet,
     LikedUserList,
-    ChangeAvatarView,
-    DeleteAvatarView,
     BlogEditorPostsView,
     BlogsWhereUserIsOwner,
     BlogsWhereUserIsAuthor,
@@ -35,10 +31,7 @@ from .viewsets import (
     SetCommentLikeView,
     SetCommentLikeByAuthorView,
     BlogCommentsDeleteView,
-    UserNotificationListView,
     PostCommentNotificationView,
-    SetNotificationIsRead,
-    HideNotificationView,
     BlogDeletePostsView,
     BlogPublicationsView,
 )
@@ -52,13 +45,7 @@ blog_posts = BlogPosts.as_view({"get": "list"})
 blog_comments = BlogComments.as_view({"get": "list"})
 # blog_authors = BlogAuthors.as_view({'get': 'list'})
 
-profile = UserProfileView.as_view(
-    {"get": "retrieve", "put": "update", "delete": "destroy"}
-)
-
 blog_subscription = BlogSubscription.as_view({"post": "toggle_subscription"})
-
-user_subscriptions = SubscriptionListViewSet.as_view({"get": "list"})
 
 post_list = PostList.as_view({"get": "list"})
 my_posts = MyPosts.as_view({"get": "list"})
@@ -89,9 +76,6 @@ blog_publications = BlogPublicationsView.as_view({"get": "list"})
 
 liked_user_list = LikedUserList.as_view({"get": "list"})
 
-change_avatar = ChangeAvatarView.as_view({"put": "update"})
-delete_avatar = DeleteAvatarView.as_view({"delete": "destroy"})
-
 blog_editor_posts = BlogEditorPostsView.as_view({"get": "list"})
 
 username_blogs_owner = BlogsWhereUserIsOwner.as_view({"get": "list"})
@@ -119,10 +103,6 @@ set_or_remove_like_by_author = SetCommentLikeByAuthorView.as_view(
     {"post": "set_or_remove_like_by_author"}
 )
 
-notification_list = UserNotificationListView.as_view({"get": "list"})
-read_notification = SetNotificationIsRead.as_view({"post": "read_notification"})
-hide_notification = HideNotificationView.as_view({"post": "hide_notification"})
-
 blog_delete_posts = BlogDeletePostsView.as_view({"delete": "delete_posts"})
 blog_delete_comments = BlogCommentsDeleteView.as_view({"delete": "delete_comments"})
 
@@ -139,17 +119,6 @@ urlpatterns = [
         name="set_or_remove_like_by_author",
     ),
     # path('blog/${slug}/authors/', blog_authors, name='blog_authors'),
-    path("profile/<slug:username>/", profile, name="profile"),
-    path("profile/<slug:username>/change/avatar/", change_avatar, name="change_avatar"),
-    path("profile/<slug:username>/avatar/delete/", delete_avatar, name="delete_avatar"),
-    path(
-        "profile/<slug:username>/notification/list/",
-        notification_list,
-        name="notification_list",
-    ),
-    path(
-        "<slug:username>/subscriptions/", user_subscriptions, name="user_subscriptions"
-    ),
     path(
         "blog/<slug:slug>/post/<int:post_id>/like/",
         set_or_remove_like,
@@ -236,8 +205,4 @@ urlpatterns = [
     path("subscriptions/mini/", subscriptions_mini, name="subscriptions_mini"),
     path("blog/<slug:slug>/leave/", leave_blog, name="leave_blog"),
     path("blog/<slug:slug>/kick/<slug:username>/", kick_user, name="kick_user"),
-    path(
-        "notification/<int:pk>/is_read/", read_notification, name="notification_is_read"
-    ),
-    path("notification/<int:pk>/hide/", hide_notification, name="hide_notification"),
 ]

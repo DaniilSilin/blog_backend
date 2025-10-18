@@ -92,3 +92,55 @@ class UserSerializer(serializers.ModelSerializer):
             "banner_small",
             "subscriptions",
         )
+
+
+class UpdateUserProfileSerializer(serializers.ModelSerializer):
+    avatar_small = serializers.ImageField(allow_null=True)
+    banner_small = serializers.ImageField(allow_null=True)
+    avatar = serializers.ImageField(allow_null=True)
+    banner = serializers.ImageField(allow_null=True)
+    subscriptionList = serializers.IntegerField()
+    subscriptions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserProfile
+        fields = (
+            "avatar",
+            "avatar_small",
+            "banner",
+            "banner_small",
+            "first_name",
+            "last_name",
+            "date_of_birth",
+            "description",
+            "email",
+            "gender",
+            "is_profile_private",
+            "username",
+            "last_activity",
+            "subscriptionList",
+            "subscriptions",
+        )
+
+    def get_subscriptions(self, obj):
+        subscriptions = obj.subscriptions.all()[:5]
+        return BlogSerializer(subscriptions, many=True).data
+
+
+class SubscriptionList(serializers.ModelSerializer):
+    subscriptions = BlogSerializer(many=True)
+
+    class Meta:
+        model = UserProfile
+        fields = ("subscriptions",)
+
+
+class ChangeAvatarSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = UserProfile
+        fields = (
+            "avatar",
+            "avatar_small",
+            "username",
+        )

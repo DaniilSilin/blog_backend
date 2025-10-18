@@ -3,8 +3,9 @@ import os
 from django.contrib.sites import requests
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status, viewsets, permissions
-from django.contrib.auth import login, logout, authenticate
-from django.shortcuts import redirect
+from django.contrib.auth import logout, authenticate
+from django.shortcuts import get_object_or_404
+from rest_framework.parsers import MultiPartParser, FormParser
 
 import requests
 
@@ -17,6 +18,9 @@ from .serializers import (
     RegisterSerializer,
     LogoutSerializer,
     UserSerializer,
+    UpdateUserProfileSerializer,
+    SubscriptionList,
+    ChangeAvatarSerializer,
 )
 
 
@@ -144,3 +148,73 @@ class IsEmailAvailable(viewsets.ModelViewSet):
                 {"available": True, "message": "Email is available."},
                 status=status.HTTP_200_OK,
             )
+
+
+class UserProfileView(viewsets.ModelViewSet):
+    queryset = UserProfile.objects.all()
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return UpdateUserProfileSerializer
+        if self.request.method == "PUT":
+            return UpdateUserProfileSerializer
+        return UpdateUserProfileSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            user = self.queryset.get(username=self.kwargs["username"])
+            user.subscriptionList = user.subscriptions.count()
+            serial = UpdateUserProfileSerializer(user)
+            return Response(serial.data)
+        except UserProfile.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+    def update(self, request, *args, **kwargs):
+        user = get_object_or_404(UserProfile, username=self.kwargs["username"])
+        serializer = UpdateUserProfileSerializer(
+            instance=user, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"status": "successful"}, status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        user = get_object_or_404(UserProfile, username=self.kwargs["username"])
+        user.delete()
+        return Response({"status: successful"}, status=status.HTTP_200_OK)
+
+
+class SubscriptionListViewSet(viewsets.ModelViewSet):
+    queryset = UserProfile.objects.all()
+    serializer_class = SubscriptionList
+    # pagination_class = ListSetPagination
+    permission_classes = [permissions.AllowAny]
+
+    def list(self, request, *args, **kwargs):
+        user = get_object_or_404(UserProfile, username=self.kwargs["username"])
+        queryset = self.queryset.filter(username=user)
+        if user:
+            result = SubscriptionList(queryset, many=True)
+            return Response(result.data, status=status.HTTP_200_OK)
+
+
+class DeleteAvatarView(viewsets.ModelViewSet):
+    queryset = UserProfile.objects.all()
+
+    # def destroy(self, request, *args, **kwargs):
+    #     user = get_object_or_404(UserProfile, username=self.kwargs['username'])
+
+
+class ChangeAvatarView(viewsets.ModelViewSet):
+    queryset = UserProfile.objects.all()
+    serializer_class = ChangeAvatarSerializer
+    parser_class = (MultiPartParser, FormParser)
+
+    def update(self, request, *args, **kwargs):
+        user = get_object_or_404(UserProfile, username=self.kwargs["username"])
+        serializer = ChangeAvatarSerializer(
+            instance=user, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"status": "success"}, status=status.HTTP_200_OK)

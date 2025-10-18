@@ -14,11 +14,9 @@ from .models import (
     Commentary,
     UserProfile,
     Tag,
-    Notification,
     PostImage,
 )
 from .validators import validate_avatar_small, validate_avatar
-from rest_framework.validators import UniqueValidator
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -537,14 +535,6 @@ class PostCommentaryListSerializer(serializers.ModelSerializer):
             return obj.reply_to.comment_id
 
 
-class SubscriptionList(serializers.ModelSerializer):
-    subscriptions = BlogSerializer(many=True)
-
-    class Meta:
-        model = UserProfile
-        fields = ("subscriptions",)
-
-
 class IsBlogOwnerSerializer(serializers.ModelSerializer):
     value = serializers.CharField(source="slug")
     id = serializers.CharField(source="pk")
@@ -578,17 +568,6 @@ class BookmarkSerializer(serializers.ModelSerializer):
         fields = ("subscriptions",)
 
 
-class ChangeAvatarSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = UserProfile
-        fields = (
-            "avatar",
-            "avatar_small",
-            "username",
-        )
-
-
 class UserProfileSerializer(serializers.ModelSerializer):
     subscriptions = BlogSerializer(many=True)
 
@@ -617,39 +596,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         )
 
 
-class UpdateUserProfileSerializer(serializers.ModelSerializer):
-    avatar_small = serializers.ImageField(allow_null=True)
-    banner_small = serializers.ImageField(allow_null=True)
-    avatar = serializers.ImageField(allow_null=True)
-    banner = serializers.ImageField(allow_null=True)
-    subscriptionList = serializers.IntegerField()
-    subscriptions = serializers.SerializerMethodField()
-
-    class Meta:
-        model = UserProfile
-        fields = (
-            "avatar",
-            "avatar_small",
-            "banner",
-            "banner_small",
-            "first_name",
-            "last_name",
-            "date_of_birth",
-            "description",
-            "email",
-            "gender",
-            "is_profile_private",
-            "username",
-            "last_activity",
-            "subscriptionList",
-            "subscriptions",
-        )
-
-    def get_subscriptions(self, obj):
-        subscriptions = obj.subscriptions.all()[:5]
-        return BlogSerializer(subscriptions, many=True).data
-
-
 class SubscriptionListMiniSerializer(serializers.ModelSerializer):
     class Meta:
         model = Blog
@@ -660,16 +606,6 @@ class BlogCommentListDeleteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Commentary
         fields = [""]
-
-
-class UserNotificationsSerializer(serializers.ModelSerializer):
-    addressee = UserSerializer()
-    author = UserSerializer()
-    post = PostSerializer()
-
-    class Meta:
-        model = Notification
-        fields = ["id", "addressee", "text", "author", "created_at", "is_read", "post"]
 
 
 class PostIdSerializer(serializers.Serializer):
