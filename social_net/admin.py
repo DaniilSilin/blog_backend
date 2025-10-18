@@ -3,7 +3,6 @@ from .models import (
     Blog,
     Post,
     UserProfile,
-    Commentary,
     Tag,
     PostImage,
 )
@@ -28,19 +27,6 @@ class AdminBlog(admin.ModelAdmin):
     list_display = ("title", "slug", "description", "created_at", "updated_at")
 
 
-class AdminCommentary(admin.ModelAdmin):
-    model = Commentary
-    list_display = (
-        "author",
-        "created_at",
-        "body",
-        "comment_id",
-        "reply_to",
-        "reply_to_id",
-        "post",
-    )
-
-
 class AdminTags(admin.ModelAdmin):
     model = Tag
     list_display = ("name",)
@@ -53,6 +39,5 @@ class AdminPostImages(admin.ModelAdmin):
 
 admin.site.register(Post, AdminPosts)
 admin.site.register(Blog, AdminBlog)
-admin.site.register(Commentary, AdminCommentary)
 admin.site.register(Tag, AdminTags)
 admin.site.register(PostImage, AdminPostImages)

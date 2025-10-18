@@ -6,7 +6,6 @@ from .viewsets import (
     MyPosts,
     BlogPosts,
     PostPage,
-    CommentaryPage,
     BlogSubscription,
     BookmarksListView,
     PostLikeDislikeViewSet,
@@ -16,9 +15,7 @@ from .viewsets import (
     IsBlogOwner,
     IsSlugAvailable,
     PostSearchView,
-    PostCommentListView,
     BookmarkView,
-    PinCommentViewSet,
     LikedUserList,
     BlogEditorPostsView,
     BlogsWhereUserIsOwner,
@@ -28,10 +25,7 @@ from .viewsets import (
     SubscriptionListView,
     SubscriptionMiniList,
     BlogAuthorList,
-    SetCommentLikeView,
-    SetCommentLikeByAuthorView,
     BlogCommentsDeleteView,
-    PostCommentNotificationView,
     BlogDeletePostsView,
     BlogPublicationsView,
 )
@@ -52,17 +46,8 @@ my_posts = MyPosts.as_view({"get": "list"})
 post_page = PostPage.as_view({"put": "update", "get": "retrieve", "delete": "destroy"})
 post_create = PostPage.as_view({"post": "create"})
 
-create_commentary = CommentaryPage.as_view({"post": "create"})
-commentary = CommentaryPage.as_view(
-    {"get": "retrieve", "delete": "destroy", "put": "update"}
-)
-post_comment_list = PostCommentListView.as_view({"get": "list"})
-post_comment_list_reply = PostCommentNotificationView.as_view({"get": "list"})
-
 pin_post = PinPostViewSet.as_view({"post": "pin_post"})
 unpin_post = PinPostViewSet.as_view({"post": "unpin_post"})
-pin_comment = PinCommentViewSet.as_view({"post": "pin_comment"})
-unpin_comment = PinCommentViewSet.as_view({"post": "unpin_comment"})
 
 leave_blog = LeaveBlogView.as_view({"post": "leave_blog"})
 kick_user = KickUserView.as_view({"post": "kick_user"})
@@ -81,7 +66,6 @@ blog_editor_posts = BlogEditorPostsView.as_view({"get": "list"})
 username_blogs_owner = BlogsWhereUserIsOwner.as_view({"get": "list"})
 username_blogs_author = BlogsWhereUserIsAuthor.as_view({"get": "list"})
 
-
 liked_posts = LikedPostListView.as_view({"get": "list"})
 bookmarked_posts = BookmarksListView.as_view({"get": "list"})
 subscriptions = SubscriptionListView.as_view({"get": "list"})
@@ -95,13 +79,6 @@ set_or_remove_dislike = PostLikeDislikeViewSet.as_view(
 )
 
 add_or_remove_bookmark = BookmarkView.as_view({"post": "add_or_remove_bookmark"})
-set_or_remove_comment_like = SetCommentLikeView.as_view({"post": "set_or_remove_like"})
-set_or_remove_comment_dislike = SetCommentLikeView.as_view(
-    {"post": "set_or_remove_dislike"}
-)
-set_or_remove_like_by_author = SetCommentLikeByAuthorView.as_view(
-    {"post": "set_or_remove_like_by_author"}
-)
 
 blog_delete_posts = BlogDeletePostsView.as_view({"delete": "delete_posts"})
 blog_delete_comments = BlogCommentsDeleteView.as_view({"delete": "delete_comments"})
@@ -113,12 +90,6 @@ urlpatterns = [
     path("blog/<slug:slug>/subscription/", blog_subscription, name="blog_subscription"),
     path("blog/<slug:slug>/authors/", blog_authors, name="blog_authors"),
     path("blog/<slug:slug>/posts/delete/", blog_delete_posts, name="blog_delete_posts"),
-    path(
-        "blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/like_by_author/",
-        set_or_remove_like_by_author,
-        name="set_or_remove_like_by_author",
-    ),
-    # path('blog/${slug}/authors/', blog_authors, name='blog_authors'),
     path(
         "blog/<slug:slug>/post/<int:post_id>/like/",
         set_or_remove_like,
@@ -135,8 +106,6 @@ urlpatterns = [
         name="add_or_remove_bookmark",
     ),
     path("blog/<slug:slug>/posts/", blog_posts, name="blog_posts"),
-    path("post/list/", post_list, name="post_list"),
-    path("posts/my/", my_posts, name="my_posts"),
     path("blog/<slug:slug>/post/create/", post_create, name="create_post"),
     path("blog/<slug:slug>/post/<int:post_id>/", post_page, name="post_page"),
     path("blog/<slug:slug>/post/<int:post_id>/pin_post/", pin_post, name="pin_post"),
@@ -144,50 +113,26 @@ urlpatterns = [
         "blog/<slug:slug>/post/<int:post_id>/unpin_post/", unpin_post, name="unpin_post"
     ),
     path(
-        "blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/like/",
-        set_or_remove_comment_like,
-        name="add_like",
-    ),
-    path(
-        "blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/dislike/",
-        set_or_remove_comment_dislike,
-        name="add_dislike",
-    ),
-    path(
-        "blog/<slug:slug>/post/<int:post_id>/comment/create/",
-        create_commentary,
-        name="create_commentary",
-    ),
-    path(
-        "blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/",
-        commentary,
-        name="commentary",
-    ),
-    path(
-        "blog/<slug:slug>/post/<int:post_id>/comment/list/",
-        post_comment_list,
-        name="post_comment_list",
-    ),
-    path(
-        "blog/<slug:slug>/post/<int:post_id>/comment/list/reply/",
-        post_comment_list_reply,
-        name="post_comment_list_reply",
-    ),
-    path(
-        "blog/<slug:slug>/post/<int:post_id>/comment/<int:comment_id>/pin/",
-        pin_comment,
-        name="pin_comment",
-    ),
-    path(
         "blog/<slug:slug>/post/<int:post_id>/liked_user_list/",
         liked_user_list,
         name="liked_user_list",
     ),
     path("blog/<slug:slug>/publications/", blog_publications, name="blog_publications"),
-    path("blog_owner/list/", is_blog_owner, name="is_blog_owner"),
     path("blog/<slug:slug>/available/", is_slug_available, name="is_slug_available"),
-    path("posts/search/<str:hashtag>/", search, name="search"),
     path("blog/<slug:slug>/editor/posts/", blog_editor_posts, name="blog_editor_posts"),
+    path("blog/<slug:slug>/comments/", blog_comments, name="blog_comments"),
+    path("blog/<slug:slug>/leave/", leave_blog, name="leave_blog"),
+    path("blog/<slug:slug>/kick/<slug:username>/", kick_user, name="kick_user"),
+
+
+    path("liked_posts/", liked_posts, name="liked_posts"),
+    path("subscriptions/", subscriptions, name="subscriptions"),
+    path("bookmarked_posts/", bookmarked_posts, name="bookmarked_posts"),
+    path("subscriptions/mini/", subscriptions_mini, name="subscriptions_mini"),
+    path("blog_owner/list/", is_blog_owner, name="is_blog_owner"),
+    path("post/list/", post_list, name="post_list"),
+    path("posts/my/", my_posts, name="my_posts"),
+    path("posts/search/<str:hashtag>/", search, name="search"),
     path(
         "<slug:username>/blogs/owner/",
         username_blogs_owner,
@@ -198,11 +143,4 @@ urlpatterns = [
         username_blogs_author,
         name="username_blogs_author",
     ),
-    path("blog/<slug:slug>/comments/", blog_comments, name="blog_comments"),
-    path("liked_posts/", liked_posts, name="liked_posts"),
-    path("subscriptions/", subscriptions, name="subscriptions"),
-    path("bookmarked_posts/", bookmarked_posts, name="bookmarked_posts"),
-    path("subscriptions/mini/", subscriptions_mini, name="subscriptions_mini"),
-    path("blog/<slug:slug>/leave/", leave_blog, name="leave_blog"),
-    path("blog/<slug:slug>/kick/<slug:username>/", kick_user, name="kick_user"),
 ]

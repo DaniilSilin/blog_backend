@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "social_net.apps.SocialNetConfig",
     "invites.apps.InvitesConfig",
     "notifications.apps.NotificationsConfig",
+    "comments.apps.CommentsConfig",
     "corsheaders",
 ]
 

@@ -1,6 +1,7 @@
 from django.db import models
 from authentication.models import UserProfile
-from social_net.models import Commentary, Post
+from social_net.models import Post
+from comments.models import Commentary
 
 
 class Notification(models.Model):

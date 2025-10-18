@@ -4,18 +4,19 @@ from rest_framework.serializers import (
     URLField,
     ImageField,
     SlugField,
-    IntegerField,
     BooleanField,
     ListField,
 )
+
 from .models import (
     Blog,
     Post,
-    Commentary,
     UserProfile,
     Tag,
     PostImage,
 )
+from comments.models import Commentary
+
 from .validators import validate_avatar_small, validate_avatar
 
 
@@ -379,42 +380,6 @@ class UpdatePostSerializer(serializers.ModelSerializer):
         )
 
 
-class UpdateCommentarySerializer(serializers.ModelSerializer):
-    author = UserSerializer()
-    replies_count = serializers.SerializerMethodField()
-    isLiked = serializers.BooleanField()
-    isDisliked = serializers.BooleanField()
-    reply_to = serializers.SerializerMethodField()
-    pinned_by_user = UserSerializer()
-
-    class Meta:
-        model = Commentary
-        fields = (
-            "comment_id",
-            "body",
-            "author",
-            "created_at",
-            "likes",
-            "dislikes",
-            "is_edited",
-            "reply_to",
-            "replies_count",
-            "liked_by_author",
-            "isLiked",
-            "isDisliked",
-            "is_pinned",
-            "pinned_by_user",
-        )
-
-    def get_replies_count(self, obj):
-        replies = obj.replies.count()
-        return replies
-
-    def get_reply_to(self, obj):
-        if obj.reply_to is not None:
-            return obj.reply_to.comment_id
-
-
 # class UpdateCommentarySerializer(serializers.ModelSerializer):
 #     reply_to = serializers.IntegerField(required=False, default=None)
 #     body = CharField(required=True)
@@ -423,49 +388,6 @@ class UpdateCommentarySerializer(serializers.ModelSerializer):
 #         model = Commentary
 #         fields = ('body', 'author', 'created_at', 'reply_to', 'comment_id')
 #         read_only_fields = ('author', 'created_at')
-
-
-class CreateCommentarySerializer(serializers.ModelSerializer):
-    reply_to = serializers.IntegerField(required=False, default=None)
-    body = CharField(required=True)
-
-    class Meta:
-        model = Commentary
-        fields = ("body", "author", "created_at", "reply_to", "comment_id")
-        read_only_fields = ("author", "created_at")
-
-
-class PostCommentarySerializer(serializers.ModelSerializer):
-    author = UserSerializer()
-    replies_count = serializers.SerializerMethodField()
-    isLiked = serializers.BooleanField(default=False)
-    isDisliked = serializers.BooleanField(default=False)
-    reply_to = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Commentary
-        fields = (
-            "comment_id",
-            "body",
-            "author",
-            "created_at",
-            "likes",
-            "dislikes",
-            "is_edited",
-            "reply_to",
-            "replies_count",
-            "liked_by_author",
-            "isLiked",
-            "isDisliked",
-        )
-
-    def get_replies_count(self, obj):
-        replies = obj.replies.count()
-        return replies
-
-    def get_reply_to(self, obj):
-        if obj.reply_to is not None:
-            return obj.reply_to.comment_id
 
 
 class BlogCommentListSerializer(serializers.ModelSerializer):
@@ -496,43 +418,6 @@ class BlogCommentListSerializer(serializers.ModelSerializer):
     def get_replies_count(self, obj):
         replies = obj.replies.count()
         return replies
-
-
-class PostCommentaryListSerializer(serializers.ModelSerializer):
-    author = UserSerializer()
-    replies_count = serializers.SerializerMethodField()
-    isLiked = serializers.BooleanField()
-    isDisliked = serializers.BooleanField()
-    reply_to = serializers.SerializerMethodField()
-    pinned_by_user = UserSerializer()
-
-    class Meta:
-        model = Commentary
-        fields = (
-            "id",
-            "comment_id",
-            "body",
-            "author",
-            "created_at",
-            "likes",
-            "dislikes",
-            "is_edited",
-            "reply_to",
-            "replies_count",
-            "liked_by_author",
-            "isLiked",
-            "isDisliked",
-            "is_pinned",
-            "pinned_by_user",
-        )
-
-    def get_replies_count(self, obj):
-        replies = obj.replies.count()
-        return replies
-
-    def get_reply_to(self, obj):
-        if obj.reply_to is not None:
-            return obj.reply_to.comment_id
 
 
 class IsBlogOwnerSerializer(serializers.ModelSerializer):
